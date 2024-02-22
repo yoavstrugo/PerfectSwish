@@ -8,11 +8,17 @@ from perfectswish.api.common_objects import Ball, WhiteBall, Cue
 Image = Union[Mat, np.ndarray]
 
 
-def subtract_images(image1: Image, image2: Image) -> Image:
-    image2_with_neg = image1.astype(np.int32)
-    image1_with_neg = image2.astype(np.int32)
-    return np.abs(image2_with_neg - image1_with_neg).astype(np.uint8)
+def subtract_images(image_no_balls: Image, image_balls: Image, threshold: int = 80) -> Image:
+    no_balls_np = np.array(image_no_balls)
+    balls_np = np.array(image_balls)
+    black_np = np.ones_like(no_balls_np) * 100
 
+    absolute_diff = np.sum(np.abs(no_balls_np - balls_np), axis=2)
+    mask = absolute_diff > threshold
+
+    final_image = np.where(mask[:, :, None], balls_np, black_np)
+
+    return final_image.astype(np.uint8)
 
 def find_circularity(cnt, perimeter, area, circularity_thersold=0.3):
     if perimeter == 0:
@@ -244,6 +250,14 @@ def find_objects(balls_image: Image, original_image: Image):
 
 
 if __name__ == '__main__':
-    board_image = cv2.imread(r"images_test\WIN_20240222_09_04_29_Pro.jpg")
-    balls_image = cv2.imread(r"images_test\WIN_20240222_09_05_19_Pro.jpg")
-    find_objects(balls_image, board_image)
+    board_image = cv2.imread(r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\image_transformation\images\WIN_20240222_09_04_29_Pro.jpg")
+    balls_image = cv2.imread(r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\image_transformation\images\WIN_20240222_09_05_19_Pro.jpg")
+    board_bilateral = cv2.bilateralFilter(board_image, 9, 100, 20)
+    #cv2.imshow("board", board_bilateral)
+    balls_bilateral = cv2.bilateralFilter(balls_image, 9, 100, 20)
+    #cv2.imshow("balls", balls_bilateral)
+    subtracted = subtract_images(board_image, balls_image, threshold=250)
+    cv2.imshow("Subtracted images", subtracted)
+    medianed = cv2.medianBlur(subtracted, 3)
+    cv2.imshow("medianed", medianed)
+    cv2.waitKey(0)
