@@ -17,9 +17,9 @@ def get_data_dir() -> Path:
     return data_dir
 
 
-def np_load(file_name):
+def load_data(file_name) -> np.ndarray:
     return np.load(get_data_dir() / file_name, allow_pickle=True)
 
 
-def np_save(file_name, data):
+def save_data(file_name, data) -> None:
     np.save(get_data_dir() / file_name, data)
