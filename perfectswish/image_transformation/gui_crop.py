@@ -172,7 +172,7 @@ class RectAdjustmentApp:
         transformed_image = transform_board(self.image, actual_rect)
         # Display the transformed image on the canvas
         image_with_black = generate_projection(transformed_image, actual_rect)
-        cv2.imwrite(fr"output_images\black_bg{self.counter}.jpg", image_with_black)
+        cv2.imwrite(fr"black_bg{self.counter}.jpg", image_with_black)
         self.counter += 1
 
     def load_new_image(self):
@@ -188,6 +188,20 @@ class RectAdjustmentApp:
             # Update the label with the new rectangle parameters
             self.label_var.set(f"Rectangle Parameters: {self.rect}")
 
+def get_camera_rect(image, initial_rect=None):
+    if not initial_rect:
+        initial_rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
+    try:
+        current_rec = [None]  # something mutable
+        def set_rect(cam_rect):
+            current_rec[0] = cam_rect
+
+        app = RectAdjustmentApp(image_in, set_rect, rect=initial_rect)
+        app.root.mainloop()
+    except ValueError as e:
+        print(f"error: {e}")
+        currect_rec = [None]
+    return current_rec[0]
 
 # Example usage:
 # Replace "your_image.jpg" with the path to your actual image file
@@ -195,13 +209,5 @@ if __name__ == '__main__':
     image_path = r"C:\Users\TLP-299\PycharmProjects\computer-vision-pool\downloaded_images\board_with_ron_uncropped.jpg"
     initial_rect = [int(0.4*x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
     image_in = cv2.imread(image_path)
-    try:
-        current_rec = [None]  # something mutable
-        def set_rect(cam_rect):
-            current_rec[0] = cam_rect
-        app = RectAdjustmentApp(image_in, set_rect, rect=initial_rect)
-        app.root.mainloop()
-        print(current_rec)
+    print(get_camera_rect(image_in, initial_rect))
 
-    except ValueError as e:
-        print(f"Error: {e}")
