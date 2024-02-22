@@ -49,20 +49,17 @@ class LiveImageDisplay:
         """
         Check if the image is a valid np.ndarray.
         :param image: The image to check.
-        :return: True if the image is valid, False otherwise.
+        :return: True if the image is invalid, False otherwise.
         """
         if not isinstance(image, np.ndarray):
             print(f"Error: Invalid image type: {type(image)}")
-            return False
+            return True
         elif image.shape[:2] != (self.__height, self.__width):
             print(f"Error: Invalid image shape: {image.shape}")
-            return False
-        return True
+            return True
+        return False
 
-    def run(self):
-        """
-        Run the main loop and display the images.
-        """
+    def __get_image_with_err(self):
         image_error = False
         try:
             image = self.__main_loop(*self.__args)
@@ -74,14 +71,18 @@ class LiveImageDisplay:
                 image = None
                 image_error = True
 
-        # Check if the image is a valid np.ndarray
-        if image_error or not self.__check_image(image):
-            image = self.__blank_image
+        return image, self.__check_image(image) or image_error
 
+    def run(self):
+        """
+        Run the main loop and display the images.
+        """
+        image, err = self.__get_image_with_err()
+
+        if err:
+            # Display blank if there is an error
             if not self.__display_last_image:
-                self.__display_image(image)
-                self.__root.after(self.__delay, self.run)
-                return
+                self.__display_image(self.__blank_image)
         else:
             self.__display_image(image)
 
