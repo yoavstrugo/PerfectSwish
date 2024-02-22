@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from api.utils import Color, Colors
+from perfectswish.api.utils import Color, Colors
 from perfectswish.api.common_objects import Ball, Board, VelocityVector
 
 
@@ -109,6 +109,6 @@ def draw_path(board_image: np.array, path: list[np.array], path_color: Color = C
 
         # Draw the junctions (circles at each point)
         if draw_path_junctions:
-            if i == 0 or i == len(path) - 2:  # Don't draw a junction at the start and end of the path
+            if i == 0 or i == len(path) - 1:  # Don't draw a junction at the start and end of the path
                 continue
             cv2.circle(board_image, (point[0], point[1]), junction_radius, junction_color, -1)
