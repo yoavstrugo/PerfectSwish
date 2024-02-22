@@ -24,9 +24,9 @@ def initialize_webcam(index: int = 0, width=1920, height=1080, fps=30) -> cv2.Vi
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     cap.set(cv2.CAP_PROP_FPS, fps)
     cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc(*'MJPG'))
-    # set buffer
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-
+    # set focus to 0
+    cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+    cap.set(cv2.CAP_PROP_FOCUS, 0)
     return cap
 
 
