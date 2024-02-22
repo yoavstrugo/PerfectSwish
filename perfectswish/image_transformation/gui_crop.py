@@ -196,7 +196,7 @@ def get_camera_rect(image, initial_rect=None):
         def set_rect(cam_rect):
             current_rec[0] = cam_rect
 
-        app = RectAdjustmentApp(image_in, set_rect, rect=initial_rect)
+        app = RectAdjustmentApp(image, set_rect, rect=initial_rect)
         app.root.mainloop()
     except ValueError as e:
         print(f"error: {e}")
