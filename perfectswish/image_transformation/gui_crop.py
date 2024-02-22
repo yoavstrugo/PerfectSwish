@@ -1,6 +1,8 @@
 import cv2
 import tkinter as tk
 from tkinter import filedialog
+
+import numpy as np
 from PIL import Image, ImageTk
 
 from perfectswish.image_transformation.gui_api import get_rect
@@ -10,11 +12,10 @@ from perfectswish.image_transformation.image_processing import transform_board, 
 class RectAdjustmentApp:
     def __init__(self, image, set_rect, rect=None):
         if rect is None:
-            rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]
+            rect = 3*np.array([817, 324, 1186, 329, 1364, 836, 709, 831])
         self.image = image
         self.cropped_image = None
 
-        self.rect = rect
         self.set_rect = set_rect  # function
         self.selected_corner = None
 
@@ -33,16 +34,13 @@ class RectAdjustmentApp:
         self.canvas_original = tk.Canvas(self.root, width=max_width, height=max_height)
         self.canvas_original.pack(side=tk.LEFT, padx=10, pady=10)
 
-        # Label to display rectangle parameters
-        self.label_var = tk.StringVar()
-        self.label_var.set(f"Rectangle Parameters: {self.rect}")
-        self.label = tk.Label(self.root, textvariable=self.label_var)
-        self.label.pack(side=tk.TOP, pady=10)
-
         # Determine the scaling factor
         scale_factor_width = max_width / self.image.shape[1]
         scale_factor_height = max_height / self.image.shape[0]
         self.scale_factor = min(scale_factor_width, scale_factor_height)
+
+        # assigning rect corresponding to the scale facto
+        self.rect = np.array(rect) * self.scale_factor
 
         # Bind mouse click event to canvas
         self.canvas_original.bind("<Button-1>", self.on_canvas_click)
@@ -100,8 +98,6 @@ class RectAdjustmentApp:
         # Update the Tkinter window
         self.root.update()
 
-        # Update the label with the current rectangle parameters
-        self.label_var.set(f"Rectangle Parameters: {self.rect}")
 
         # Call the draw_rect function again after a delay (in milliseconds)
         self.root.after(100, self.draw_rect)
@@ -141,9 +137,6 @@ class RectAdjustmentApp:
         if self.selected_corner is not None:
             self.rect[self.selected_corner] += delta_x
             self.rect[self.selected_corner + 1] += delta_y
-
-            # Update the label with the new rectangle parameters
-            self.label_var.set(f"Rectangle Parameters: {self.rect}")
 
     def transform_and_display(self):
         # Transform the image using the specified rectangle
@@ -188,9 +181,6 @@ class RectAdjustmentApp:
                          [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Reset rectangle coordinates
             self.selected_corner = None
 
-            # Update the label with the new rectangle parameters
-            self.label_var.set(f"Rectangle Parameters: {self.rect}")
-
 
 def get_camera_rect(image, initial_rect=None):
     return get_rect(image, RectAdjustmentApp, initial_rect=initial_rect)
@@ -200,6 +190,6 @@ def get_camera_rect(image, initial_rect=None):
 # Replace "your_image.jpg" with the path to your actual image file
 if __name__ == '__main__':
     image_path = r"C:\Users\TLP-299\PycharmProjects\computer-vision-pool\downloaded_images\board_with_ron_uncropped.jpg"
-    initial_rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
+    initial_rect = [int( x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
     image_in = cv2.imread(image_path)
     print(get_camera_rect(image_in, initial_rect))

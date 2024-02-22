@@ -6,6 +6,7 @@ from tkinter import filedialog
 from perfectswish.image_transformation.image_processing import generate_projection
 from perfectswish.image_transformation.gui_api import get_rect
 
+
 class RectAdjustmentAppProjection:
     def __init__(self, image, set_rect, rect=None, real_image=True):
 
@@ -17,10 +18,12 @@ class RectAdjustmentAppProjection:
             self.image = np.ones_like(image) * 200
         self.cropped_image = None
 
-        self.rect = rect
         self.set_rect = set_rect  # function
         self.selected_corner = None
         self.scale_factor = 0.5
+
+
+        self.rect = np.array(rect) * self.scale_factor
 
         self.root = tk.Tk()
         self.root.title("Rectangle Adjustment")
@@ -39,10 +42,9 @@ class RectAdjustmentAppProjection:
 
         # Label to display rectangle parameters
         self.label_var = tk.StringVar()
-        self.label_var.set(f"Rectangle Parameters: {[x/self.scale_factor for x in self.rect]}")
+        self.label_var.set(f"Rectangle Parameters: {[x / self.scale_factor for x in self.rect]}")
         self.label = tk.Label(self.root, textvariable=self.label_var)
         self.label.pack(side=tk.TOP, pady=10)
-
 
         # Determine the scaling factor
         scale_factor_width = max_width / self.image.shape[1]
@@ -66,12 +68,7 @@ class RectAdjustmentAppProjection:
         self.load_button = tk.Button(self.root, text="Load New Image", command=self.load_new_image)
         self.load_button.pack(side=tk.TOP, pady=10)
 
-        # Create a canvas for displaying the live webcam feed
-        self.canvas_webcam = tk.Canvas(self.root, width=max_width, height=max_height)
-        self.canvas_webcam.pack(side=tk.RIGHT, padx=10, pady=10)
-
-
-        # Create a window for displaying the cropped image (shutting this feature off for now)
+        # Create a window for displaying the cropped image
         self.cropped_image_window = tk.Toplevel(self.root)
         self.initialize_cropped_image_window()
 
@@ -180,13 +177,15 @@ class RectAdjustmentAppProjection:
         self.root.destroy()
 
     def load_new_image(self):
-        file_path = filedialog.askopenfilename(title="Select Image File", filetypes=[("Image files", "*.png;*.jpg;*.jpeg")])
+        file_path = filedialog.askopenfilename(title="Select Image File",
+                                               filetypes=[("Image files", "*.png;*.jpg;*.jpeg")])
         if file_path:
             self.image = cv2.imread(file_path)
             if self.image is None:
                 raise ValueError(f"Error loading image from path: {file_path}")
 
-            self.rect = [int(self.scale_factor*x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Reset rectangle coordinates
+            self.rect = [int(self.scale_factor * x) for x in
+                         [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Reset rectangle coordinates
             self.selected_corner = None
 
             # Update the label with the new rectangle parameters
@@ -199,6 +198,6 @@ def get_projection_rect(image, initial_rect=None):
 
 if __name__ == '__main__':
     image_path = r"C:\Users\TLP-299\PycharmProjects\computer-vision-pool\uncropped_images\board1_uncropped.jpg"
-    initial_rect = [int(0.4*x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]] # Initial rectangle coordinates
+    initial_rect = [817, 324, 1186, 329, 1364, 836, 709, 831]  # Initial rectangle coordinates
     image_in = cv2.imread(image_path)
     print(get_projection_rect(image_in, initial_rect=initial_rect))
