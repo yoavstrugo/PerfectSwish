@@ -61,8 +61,8 @@ def draw_board(board: Board, board_outline_color: Color = Colors.WHITE) -> np.ar
     :return: The image that visualize the given board.
     """
     board_image = np.zeros((board.height, board.width, 3), dtype=np.uint8)
-    # add white rectangle to represent the board
-    cv2.rectangle(board_image, (0, 0), (board.width, board.height), board_outline_color, -1)
+    # add white rectangle outline to represent the board
+    cv2.rectangle(board_image, (0, 0), (board.width, board.height), board_outline_color, 10)
     return board_image
 
 
