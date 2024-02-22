@@ -13,7 +13,8 @@ def visualize_pool_board(board: Board, path: list[np.array] = None,
                          junction_color: Color = Colors.YELLOW,
                          junction_radius: int = 5,
                          direction_vector_color: Color = Colors.PURPLE,
-                         direction_vector_length: int = 50, direction_vector_thickness: int = 5) -> np.array:
+                         direction_vector_length: int = 50, direction_vector_thickness: int = 5,
+                         board_outline_color: Color = Colors.WHITE) -> np.array:
     """
     Creates an image that visualize board with the given path, balls and direction vectors.
 
@@ -29,11 +30,12 @@ def visualize_pool_board(board: Board, path: list[np.array] = None,
     :param direction_vector_color: The color of the direction vectors.
     :param direction_vector_length: The length of the direction vectors.
     :param direction_vector_thickness: The thickness of the direction vectors.
+    :param board_outline_color: The color of the board outline.
 
     :return: The image that visualize the board with the given path, balls and direction vectors.
     """
 
-    board_image = np.zeros((board.height, board.width, 3), dtype=np.uint8)
+    board_image = draw_board(board=board, board_outline_color=board_outline_color)
 
     if path:
         draw_path(board_image=board_image, path=path, path_color=path_color,
@@ -50,6 +52,19 @@ def visualize_pool_board(board: Board, path: list[np.array] = None,
 
     return board_image
 
+def draw_board(board: Board, board_outline_color: Color = Colors.WHITE) -> np.array:
+    """
+    Creates an image that visualize the given board.
+
+    :param board: The board to visualize.
+
+    :return: The image that visualize the given board.
+    """
+    board_image = np.zeros((board.height, board.width, 3), dtype=np.uint8)
+    # add white rectangle to represent the board
+    cv2.rectangle(board_image, (0, 0), (board.width, board.height), board_outline_color, -1)
+    return board_image
+
 
 def draw_velocity_vectors(board_image: np.array, direction_vectors: list[VelocityVector],
                           color: Color = Colors.PURPLE,
@@ -64,9 +79,9 @@ def draw_velocity_vectors(board_image: np.array, direction_vectors: list[Velocit
     :param thickness: The thickness of the velocity vectors.
     """
     for vector in direction_vectors:
-        cv2.arrowedLine(board_image, pt1=(vector.position[0], vector.position[1]),
-                        pt2=(vector.position[0] + int(length * vector.direction[0]),
-                             vector.position[1] + int(length * vector.direction[1])),
+        cv2.arrowedLine(board_image, pt1=(int(vector.position[0]), int(vector.position[1])),
+                        pt2=(int(vector.position[0]) + int(length * vector.direction[0]),
+                             int(vector.position[1]) + int(length * vector.direction[1])),
                         color=color, thickness=thickness)
 
 
