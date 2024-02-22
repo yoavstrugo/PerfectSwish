@@ -24,7 +24,7 @@ def find_circles(balls_image, contours):
         circularity = 4 * np.pi * (area / (perimeter * perimeter))
         if 0.3 < circularity <= 1.6:
             (x, y), radius = cv2.minEnclosingCircle(cnt)
-            center = (int(x), int(y))
+            center = np.array([int(x), int(y)])
             radius = int(radius) + 2
             if radius > 11:
                 cv2.circle(image_with_circles, center, radius, (0, 255, 0), 2)
@@ -201,6 +201,8 @@ def find_objects(balls_image: Image, original_image: Image):
     ball_center_radius, image_with_circles, img_contours, contours = find_balls(balls_image, original_image)
     image_with_circles_and_cue, cue_contour = find_cue(image_with_circles, contours)
     balls, cue_ball = create_ball_objects(ball_center_radius, original_image)
+    if cue_ball is None:
+        return balls, None, None
     cue = create_cue_object(cue_contour, original_image, cue_ball.position)
     return balls, cue_ball, cue
 
