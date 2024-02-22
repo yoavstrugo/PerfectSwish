@@ -10,6 +10,15 @@ PI = math.pi
 
 
 def generate_path(white_ball, balls, board, max_len):
+    """
+    Returns the expected path based on geometric calculations in find_wall_hit, find_ball_hit
+    :param white_ball:
+    :param balls:
+    :param board:
+    :param max_len:
+    :return: path - list of points connected by straight lines.
+    ball_hit - data about the expected hit:
+    """
     path = [white_ball.position]
     moving_ball = dataclasses.replace(white_ball)
     moving_ball.direction = normalize(white_ball.direction)
@@ -44,7 +53,7 @@ def find_wall_hit(white_ball, board):
     new_dir = np.zeros(2)
     min_dist = math.inf
     for dist in dists:
-        if dist[1] < min_dist and dist[1] > 0:
+        if min_dist > dist[1] > 0:
             min_dist = dist[1]
             hit_point = white_ball.position + dir_vec * dist[1]
             new_dir = np.array([dir_vec[0] * dist[0][0], dir_vec[1] * dist[0][1]])
@@ -103,24 +112,29 @@ def get_hit_data(ball, white_ball):
 
     # Check for balls collision
     if minimal_dist > white_ball.radius + ball.radius:
-        return None
+        return None  # The Balls won't hit!
 
+    # Calculate the hit data:
     d = math.sqrt(radii_sum * radii_sum - minimal_dist * minimal_dist)
-    white_hit_pos = white_ball.position + normalize(projection_vector) * (projection - d)
-    hit_vector = ball.position - white_hit_pos
 
+    ball_pos = ball.position
+    white_hit_pos = white_ball.position + normalize(projection_vector) * (projection - d)
+
+    hit_vector = ball.position - white_hit_pos
     unit_ball_vec = normalize(hit_vector)
     white_ball_vec = movement_vector - unit_ball_vec * np.inner(movement_vector, unit_ball_vec)
     unit_white_ball_vec = normalize(white_ball_vec)
 
     # white_hit_pos = ball.position - unit_ball_vec*(radii_sum)
-    hit_point = ball.position - unit_ball_vec * (ball.radius)
+    hit_point = ball.position - unit_ball_vec * ball.radius
 
-    hit = Ball_Hit(ball.position, unit_ball_vec, white_hit_pos, unit_white_ball_vec, hit_point)
+    # hit = Ball_Hit(ball_pos, unit_ball_vec, white_hit_pos, unit_white_ball_vec, hit_point)
+    hit = Ball_Hit(ball_pos, unit_ball_vec, white_hit_pos, white_ball_vec, hit_point)
     return norm(projection_vector), hit
 
 
 def normalize(vec: np.array) -> np.array:
-    if norm(vec) == 0:
-        return vec
+    if norm(vec) <= 0.001:
+        return np.array([0, 0])
+
     return vec / norm(vec)
