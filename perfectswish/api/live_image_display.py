@@ -1,4 +1,5 @@
 import tkinter as tk
+import traceback
 
 import cv2
 import numpy as np
@@ -62,9 +63,9 @@ class LiveImageDisplay:
     def __get_image_with_err(self):
         image_error = False
         try:
-            image = self.__main_loop(*self.__args[:self.__main_loop_arg_count])
+            image = self.__main_loop(*(self.__args[:self.__main_loop_arg_count]))
         except Exception as e:
-            print(f"Error: In main loop: {e}")
+            print(f"Error: In main loop: {traceback.format_exc()}")
             if self.__display_last_image:
                 image = self.__image
             else:
