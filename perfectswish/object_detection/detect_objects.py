@@ -26,17 +26,25 @@ def find_circularity(cnt, perimeter, area, circularity_thersold=0.3):
 def find_circles(balls_image, contours, min_radius=9, max_radius=25):
     balls_center_radius = []
     image_with_circles = balls_image.copy()
-    for cnt in contours:
-        perimeter = cv2.arcLength(cnt, True)
-        area = cv2.contourArea(cnt)
-        if find_circularity(cnt, perimeter, area):
-            (x, y), radius = cv2.minEnclosingCircle(cnt)
-            center = (int(x), int(y))
-            radius = int(radius)
-            if radius > min_radius and radius < max_radius:
-                cv2.circle(image_with_circles, center, radius, (0, 255, 0), 2)
-                ball = (center, radius)
-                balls_center_radius.append(ball)
+    for color in contours:
+        for cnt in color:
+            perimeter = cv2.arcLength(cnt, True)
+            area = cv2.contourArea(cnt)
+            if find_circularity(cnt, perimeter, area):
+                (x, y), radius = cv2.minEnclosingCircle(cnt)
+                center = (int(x), int(y))
+                radius = int(radius)
+                add_ball = True
+                for ball in balls_center_radius:
+                    if np.linalg.norm(np.array(ball[0]) - np.array(center)) < 25:
+                        add_ball = False
+                        break
+                if not add_ball:
+                    continue
+                if radius > min_radius and radius < max_radius:
+                    cv2.circle(image_with_circles, center, radius, (0, 255, 0), 2)
+                    ball = (center, radius)
+                    balls_center_radius.append(ball)
     return balls_center_radius, image_with_circles
 
 
@@ -209,23 +217,31 @@ def cue_object(image_with_circles: Image, original_image: Image, contours, cue_b
     return cue
 
 
+def mask_by_colors(image: Image):
+    red_mask = cv2.inRange(image, np.array([0, 0, 70]), np.array([255, 255, 255]))
+    green_mask = cv2.inRange(image, np.array([0, 70, 0]), np.array([255, 255, 255]))
+    blue_mask = cv2.inRange(image, np.array([70,0,0]), np.array([255, 255, 255]))
+    return red_mask, green_mask, blue_mask
+
+
 def find_contours(balls_image: Image, original_image: Image):
-    cv2.imshow("balls_image", balls_image)
     subtracted_image = subtract_images(original_image, balls_image)
-
-    cv2.imshow("subtracted_image", subtracted_image)
-
     rgb = cv2.cvtColor(subtracted_image, cv2.COLOR_BGR2RGB)
     bilateral_color = cv2.bilateralFilter(rgb, 9, 100, 20)
+    red_mask, green_mask, blue_mask = mask_by_colors(bilateral_color)
     mask_image = take_threshold(bilateral_color, 40)
-    cv2.imshow("mask_image", mask_image)
-    erisioned_dilated_image = erision_dilation(mask_image, 3, 3)
-    contours, _ = cv2.findContours(erisioned_dilated_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    img_contours = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
-    cv2.drawContours(img_contours, contours, -1, Colors.WHITE, 1)
-    cv2.imshow("img_contours", img_contours)
-    cv2.waitKey(0)
-    return img_contours, contours
+    masks = [red_mask, green_mask, blue_mask, mask_image]
+    img_contours_array = []
+    contours_array = []
+    for mask in masks:
+        erisioned_dilated_image = erision_dilation(mask, 3, 3)
+        contours, _ = cv2.findContours(erisioned_dilated_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        img_contours = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
+        cv2.drawContours(img_contours, contours, -1, Colors.WHITE, 1)
+        img_contours_array.append(img_contours)
+        contours_array.append(contours)
+
+    return img_contours_array, contours_array
 
 
 def find_balls_and_circle_them(contours):
@@ -235,15 +251,22 @@ def find_balls_and_circle_them(contours):
 
 def find_objects(balls_image: Image, original_image: Image):
     img_contours, contours = find_contours(balls_image, original_image)
-    ball_center_radius, image_with_circles = find_balls_and_circle_them(contours)
+    color_contours = [contours[0], contours[1], contours[2]]
+    color_img_contours = [img_contours[0], img_contours[1], img_contours[2]]
+    black_img_contours = img_contours[3]
+    for img_cnt in color_img_contours:
+        cv2.imshow("img_cnt", img_cnt)
+        cv2.waitKey(0)
+    black_contours = contours[3]
+    ball_center_radius, image_with_circles = find_balls_and_circle_them(color_contours)
     cv2.imshow("image_with_circles", image_with_circles)
     cv2.waitKey(0)
     balls, cue_ball = ball_objects(ball_center_radius, original_image)
-    cue = cue_object(image_with_circles, original_image, contours, cue_ball)
+    cue = cue_object(image_with_circles, original_image, black_contours, cue_ball)
     return balls, cue_ball, cue
 
 
 if __name__ == '__main__':
-    board_image = cv2.imread(r"images_test\WIN_20240222_09_04_29_Pro.jpg")
-    balls_image = cv2.imread(r"images_test\WIN_20240222_09_05_19_Pro.jpg")
+    board_image = cv2.imread(r"images_test\blank_board.jpg")
+    balls_image = cv2.imread(r"images_test\4.jpg")
     find_objects(balls_image, board_image)
