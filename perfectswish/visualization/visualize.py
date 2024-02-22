@@ -64,9 +64,9 @@ def draw_velocity_vectors(board_image: np.array, direction_vectors: list[Velocit
     :param thickness: The thickness of the velocity vectors.
     """
     for vector in direction_vectors:
-        cv2.arrowedLine(board_image, pt1=(vector.position[0], vector.position[1]),
-                        pt2=(vector.position[0] + int(length * vector.direction[0]),
-                             vector.position[1] + int(length * vector.direction[1])),
+        cv2.arrowedLine(board_image, pt1=(int(vector.position[0]), int(vector.position[1])),
+                        pt2=(int(vector.position[0]) + int(length * vector.direction[0]),
+                             int(vector.position[1]) + int(length * vector.direction[1])),
                         color=color, thickness=thickness)
 
 
