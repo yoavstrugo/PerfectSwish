@@ -23,7 +23,7 @@ def find_circularity(cnt, perimeter, area, circularity_thersold=0.3):
     return False
 
 
-def find_circles(balls_image, contours, min_radius=13, max_radius=22):
+def find_circles(balls_image, contours, min_radius=9, max_radius=25):
     balls_center_radius = []
     image_with_circles = balls_image.copy()
     for cnt in contours:
@@ -210,14 +210,21 @@ def cue_object(image_with_circles: Image, original_image: Image, contours, cue_b
 
 
 def find_contours(balls_image: Image, original_image: Image):
-    subtracted_image = subtract_images(balls_image, original_image)
+    cv2.imshow("balls_image", balls_image)
+    subtracted_image = subtract_images(original_image, balls_image)
+
+    cv2.imshow("subtracted_image", subtracted_image)
+
     rgb = cv2.cvtColor(subtracted_image, cv2.COLOR_BGR2RGB)
     bilateral_color = cv2.bilateralFilter(rgb, 9, 100, 20)
     mask_image = take_threshold(bilateral_color, 40)
+    cv2.imshow("mask_image", mask_image)
     erisioned_dilated_image = erision_dilation(mask_image, 3, 3)
     contours, _ = cv2.findContours(erisioned_dilated_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     img_contours = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
     cv2.drawContours(img_contours, contours, -1, Colors.WHITE, 1)
+    cv2.imshow("img_contours", img_contours)
+    cv2.waitKey(0)
     return img_contours, contours
 
 
@@ -229,6 +236,8 @@ def find_balls_and_circle_them(contours):
 def find_objects(balls_image: Image, original_image: Image):
     img_contours, contours = find_contours(balls_image, original_image)
     ball_center_radius, image_with_circles = find_balls_and_circle_them(contours)
+    cv2.imshow("image_with_circles", image_with_circles)
+    cv2.waitKey(0)
     balls, cue_ball = ball_objects(ball_center_radius, original_image)
     cue = cue_object(image_with_circles, original_image, contours, cue_ball)
     return balls, cue_ball, cue
@@ -236,5 +245,5 @@ def find_objects(balls_image: Image, original_image: Image):
 
 if __name__ == '__main__':
     board_image = cv2.imread(r"images_test\WIN_20240222_09_04_29_Pro.jpg")
-    balls_image = cv2.imread(r"images_test\WIN_20240222_09_06_19_Pro.jpg")
+    balls_image = cv2.imread(r"images_test\WIN_20240222_09_05_19_Pro.jpg")
     find_objects(balls_image, board_image)
