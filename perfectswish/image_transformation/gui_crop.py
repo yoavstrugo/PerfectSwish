@@ -188,6 +188,7 @@ class RectAdjustmentApp:
             # Update the label with the new rectangle parameters
             self.label_var.set(f"Rectangle Parameters: {self.rect}")
 
+
 def get_camera_rect(image, initial_rect=None):
     if not initial_rect:
         initial_rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
@@ -202,6 +203,7 @@ def get_camera_rect(image, initial_rect=None):
         print(f"error: {e}")
         currect_rec = [None]
     return current_rec[0]
+
 
 # Example usage:
 # Replace "your_image.jpg" with the path to your actual image file
