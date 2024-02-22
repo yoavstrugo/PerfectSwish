@@ -8,6 +8,7 @@ FPS = 30
 WIDTH = 1920
 HEIGHT = 1080
 
+
 class LiveImageDisplay:
     """
     Continuously displays images from a main loop, to make a "live feed".
@@ -36,14 +37,16 @@ class LiveImageDisplay:
         self.__width = width
         self.__height = height
 
+        self.__main_loop_arg_count = main_loop.__code__.co_argcount
+
         self.__image = None
         self.__blank_image = np.zeros((self.__height, self.__width, 3), dtype=np.uint8)
 
-        self.__root = tk.Tk()
-        self.__root.title(window_name)
+        self._root = tk.Tk()
+        self._root.title(window_name)
 
-        self.__canvas = tk.Canvas(self.__root, width=self.__width, height=self.__height)
-        self.__canvas.pack()
+        self._canvas = tk.Canvas(self._root, width=self.__width, height=self.__height)
+        self._canvas.pack()
 
     def __check_image(self, image):
         """
@@ -54,15 +57,12 @@ class LiveImageDisplay:
         if not isinstance(image, np.ndarray):
             print(f"Error: Invalid image type: {type(image)}")
             return True
-        elif image.shape[:2] != (self.__height, self.__width):
-            print(f"Error: Invalid image shape: {image.shape}")
-            return True
         return False
 
     def __get_image_with_err(self):
         image_error = False
         try:
-            image = self.__main_loop(*self.__args)
+            image = self.__main_loop(*self.__args[:self.__main_loop_arg_count])
         except Exception as e:
             print(f"Error: In main loop: {e}")
             if self.__display_last_image:
@@ -74,6 +74,10 @@ class LiveImageDisplay:
         return image, self.__check_image(image) or image_error
 
     def run(self):
+        self.__run()
+        self._root.mainloop()
+
+    def __run(self):
         """
         Run the main loop and display the images.
         """
@@ -86,13 +90,43 @@ class LiveImageDisplay:
         else:
             self.__display_image(image)
 
-        self.__root.after(self.__delay, self.run)
-        self.__root.update()
-        self.__root.mainloop()
+        self._root.after(self.__delay, self.__run)
 
     def __display_image(self, images):
         # display single image
         image_resized = cv2.resize(images, (self.__width, self.__height))
         image_tk = ImageTk.PhotoImage(image=Image.fromarray(image_resized))
-        self.__canvas.create_image(0, 0, anchor=tk.NW, image=image_tk)
+        self._canvas.create_image(0, 0, anchor=tk.NW, image=image_tk)
         self.__image = image_tk
+
+
+class ControlledLiveImageDisplay(LiveImageDisplay):
+    """
+    A live image display with control buttons.
+    """
+
+    def __init__(self, main_loop, create_controls, *args, framerate=FPS, window_name: str = '',
+                 display_last_image: bool = False,
+                 width=WIDTH, height=HEIGHT):
+        """
+        A class which continuously displays images from a main loop.
+        :param main_loop: A function which returns an image.
+        :param args: Arguments to pass to the main
+        :param framerate: The framerate to display the images at.
+        :param window_name: The name of the window.
+        :param display_last_image: Whether to display the previous image if the main loop returns None,
+        invalid type, or raises an exception. If False, the blank image will be displayed.
+        :param width: The width of the window.
+        :param height: The height of the window.
+        """
+
+        width = 900
+        height = 1080
+
+        super().__init__(main_loop, *args, framerate=framerate, window_name=window_name,
+                         display_last_image=display_last_image, width=width, height=height)
+
+        self.return_values = dict()
+
+        self._canvas.pack_forget()
+        self._canvas, self.__controls = create_controls(self._root, self.return_values, *args)
