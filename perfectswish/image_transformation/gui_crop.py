@@ -1,10 +1,11 @@
 import cv2
-import numpy as np
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import filedialog
 from PIL import Image, ImageTk
-import os
+
+from perfectswish.image_transformation.gui_api import get_rect
 from perfectswish.image_transformation.image_processing import transform_board, generate_projection
+
 
 class RectAdjustmentApp:
     def __init__(self, image, set_rect, rect=None):
@@ -37,7 +38,6 @@ class RectAdjustmentApp:
         self.label_var.set(f"Rectangle Parameters: {self.rect}")
         self.label = tk.Label(self.root, textvariable=self.label_var)
         self.label.pack(side=tk.TOP, pady=10)
-
 
         # Determine the scaling factor
         scale_factor_width = max_width / self.image.shape[1]
@@ -94,7 +94,8 @@ class RectAdjustmentApp:
 
         # Draw the rectangle on the original canvas
         self.canvas_original.create_polygon(self.rect[0], self.rect[1], self.rect[2], self.rect[3],
-                                            self.rect[4], self.rect[5], self.rect[6], self.rect[7], outline="red", fill="")
+                                            self.rect[4], self.rect[5], self.rect[6], self.rect[7], outline="red",
+                                            fill="")
 
         # Update the Tkinter window
         self.root.update()
@@ -176,13 +177,15 @@ class RectAdjustmentApp:
         self.counter += 1
 
     def load_new_image(self):
-        file_path = filedialog.askopenfilename(title="Select Image File", filetypes=[("Image files", "*.png;*.jpg;*.jpeg")])
+        file_path = filedialog.askopenfilename(title="Select Image File",
+                                               filetypes=[("Image files", "*.png;*.jpg;*.jpeg")])
         if file_path:
             self.image = cv2.imread(file_path)
             if self.image is None:
                 raise ValueError(f"Error loading image from path: {file_path}")
 
-            self.rect = [int(self.scale_factor*x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Reset rectangle coordinates
+            self.rect = [int(self.scale_factor * x) for x in
+                         [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Reset rectangle coordinates
             self.selected_corner = None
 
             # Update the label with the new rectangle parameters
@@ -190,26 +193,13 @@ class RectAdjustmentApp:
 
 
 def get_camera_rect(image, initial_rect=None):
-    if not initial_rect:
-        initial_rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
-    try:
-        current_rec = [None]  # something mutable
-        def set_rect(cam_rect):
-            current_rec[0] = cam_rect
-
-        app = RectAdjustmentApp(image, set_rect, rect=initial_rect)
-        app.root.mainloop()
-    except ValueError as e:
-        print(f"error: {e}")
-        currect_rec = [None]
-    return current_rec[0]
+    return get_rect(image, RectAdjustmentApp, initial_rect=initial_rect)
 
 
 # Example usage:
 # Replace "your_image.jpg" with the path to your actual image file
 if __name__ == '__main__':
     image_path = r"C:\Users\TLP-299\PycharmProjects\computer-vision-pool\downloaded_images\board_with_ron_uncropped.jpg"
-    initial_rect = [int(0.4*x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
+    initial_rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
     image_in = cv2.imread(image_path)
     print(get_camera_rect(image_in, initial_rect))
-

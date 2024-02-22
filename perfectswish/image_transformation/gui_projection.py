@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 import tkinter as tk
 from tkinter import filedialog
 from perfectswish.image_transformation.image_processing import generate_projection
-
+from perfectswish.image_transformation.gui_api import get_rect
 
 class RectAdjustmentAppProjection:
     def __init__(self, image, set_rect, rect=None):
@@ -193,19 +193,7 @@ class RectAdjustmentAppProjection:
 
 
 def get_projection_rect(image, initial_rect=None):
-    if not initial_rect:
-        initial_rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
-    try:
-        current_rec = [None]  # something mutable
-        def set_rect(cam_rect):
-            current_rec[0] = cam_rect
-
-        app = RectAdjustmentAppProjection(image, set_rect, rect=initial_rect)
-        app.root.mainloop()
-    except ValueError as e:
-        print(f"error: {e}")
-        currect_rec = [None]
-    return current_rec[0]
+    return get_rect(image, RectAdjustmentAppProjection, initial_rect=initial_rect)
 
 
 if __name__ == '__main__':
