@@ -24,7 +24,7 @@ class Board:
 
 def find_board():
     # finds board
-    return Board(112, 224)
+    return Board(112 * 4, 224 * 4)
 
 def transform_board(image: Image, rect) -> Image:
     # Get the coordinates of the corners of the board
