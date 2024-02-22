@@ -4,7 +4,7 @@ import tkinter as tk
 import numpy as np
 
 from perfectswish.api import webcam
-from perfectswish.api.live_image_display import ControlledLiveImageDisplay
+from perfectswish.gui.live_image_display import ControlledLiveImageDisplay
 
 
 def __create_take_image_controls(root, return_values, cap, title):
