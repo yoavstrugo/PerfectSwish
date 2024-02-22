@@ -7,13 +7,14 @@ from perfectswish.image_transformation.image_processing import generate_projecti
 from perfectswish.image_transformation.gui_api import get_rect
 
 class RectAdjustmentAppProjection:
-    def __init__(self, image, set_rect, rect=None):
+    def __init__(self, image, set_rect, rect=None, real_image=True):
 
         if rect is None:
             rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]
 
-        # self.image = image
-        self.image = np.ones_like(image) * 200
+        self.image = image
+        if not real_image:
+            self.image = np.ones_like(image) * 200
         self.cropped_image = None
 
         self.rect = rect
@@ -200,13 +201,4 @@ if __name__ == '__main__':
     image_path = r"C:\Users\TLP-299\PycharmProjects\computer-vision-pool\uncropped_images\board1_uncropped.jpg"
     initial_rect = [int(0.4*x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]] # Initial rectangle coordinates
     image_in = cv2.imread(image_path)
-    try:
-        current_rec = [None]  # something mutable
-        def set_rect(cam_rect):
-            current_rec[0] = cam_rect
-
-        app = RectAdjustmentAppProjection(image_in, set_rect, rect=initial_rect)
-        app.root.mainloop()
-        print(current_rec)
-    except ValueError as e:
-        print(f"Error: {e}")
+    print(get_projection_rect(image_in, initial_rect=initial_rect))
