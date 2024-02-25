@@ -23,7 +23,7 @@ class RectAdjustmentAppProjection:
         self.scale_factor = 0.5
 
 
-        self.rect = np.array(rect) * self.scale_factor
+        self.rect = np.array(rect)
 
         self.root = tk.Tk()
         self.root.title("Rectangle Adjustment")
@@ -198,6 +198,6 @@ def get_projection_rect(image, initial_rect=None):
 
 if __name__ == '__main__':
     image_path = r"C:\Users\TLP-299\PycharmProjects\computer-vision-pool\uncropped_images\board1_uncropped.jpg"
-    initial_rect = [817, 324, 1186, 329, 1364, 836, 709, 831]  # Initial rectangle coordinates
+    initial_rect = [820, 320, 1100, 300, 1400, 850, 709, 831]  # Initial rectangle coordinates
     image_in = cv2.imread(image_path)
     print(get_projection_rect(image_in, initial_rect=initial_rect))
