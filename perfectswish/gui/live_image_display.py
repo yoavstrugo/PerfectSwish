@@ -16,7 +16,7 @@ class LiveImageDisplay:
     """
 
     def __init__(self, main_loop, *args, framerate=FPS, window_name: str = '',
-                 display_last_image: bool = False,
+                 display_last_image: bool = False, borderless: bool = False,
                  width=WIDTH, height=HEIGHT):
         """
         A class which continuously displays images from a main loop.
@@ -45,6 +45,7 @@ class LiveImageDisplay:
 
         self._root = tk.Tk()
         self._root.title(window_name)
+        self._root.attributes("-fullscreen", borderless)
 
         self._canvas = tk.Canvas(self._root, width=self.__width, height=self.__height)
         self._canvas.pack()
