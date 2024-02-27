@@ -78,7 +78,7 @@ def main_loop(cap: cv2.VideoCapture, camera_rect: list, projector_rect: list, em
     webcam_image = get_board_image(cap)
 
     transformed_webcam_image = transform_board(webcam_image, camera_rect)
-    balls, cue_ball, cue, im_new = find_objects(transformed_webcam_image, empty_image_transformed)
+    balls, cue_ball, cue = find_objects(transformed_webcam_image, empty_image_transformed)
     board = find_board()
 
 
