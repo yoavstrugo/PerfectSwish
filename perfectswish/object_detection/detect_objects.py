@@ -8,17 +8,11 @@ from perfectswish.api.common_objects import Ball, WhiteBall, Cue
 Image = Union[Mat, np.ndarray]
 
 
-def subtract_images(image_no_balls: Image, image_balls: Image, threshold: int = 80) -> Image:
-    no_balls_np = np.array(image_no_balls)
-    balls_np = np.array(image_balls)
-    black_np = np.ones_like(no_balls_np) * 100
+def subtract_images(image1: Image, image2: Image) -> Image:
+    image2_with_neg = image1.astype(np.int32)
+    image1_with_neg = image2.astype(np.int32)
+    return np.abs(image2_with_neg - image1_with_neg).astype(np.uint8)
 
-    absolute_diff = np.sum(np.abs(no_balls_np - balls_np), axis=2)
-    mask = absolute_diff > threshold
-
-    final_image = np.where(mask[:, :, None], balls_np, black_np)
-
-    return final_image.astype(np.uint8)
 
 def find_circularity(cnt, perimeter, area, circularity_thersold=0.3):
     if perimeter == 0:
@@ -29,28 +23,21 @@ def find_circularity(cnt, perimeter, area, circularity_thersold=0.3):
     return False
 
 
+
 def find_circles(balls_image, contours, min_radius=9, max_radius=25):
     balls_center_radius = []
     image_with_circles = balls_image.copy()
-    for color in contours:
-        for cnt in color:
-            perimeter = cv2.arcLength(cnt, True)
-            area = cv2.contourArea(cnt)
-            if find_circularity(cnt, perimeter, area):
-                (x, y), radius = cv2.minEnclosingCircle(cnt)
-                center = (int(x), int(y))
-                radius = int(radius)
-                add_ball = True
-                for ball in balls_center_radius:
-                    if np.linalg.norm(np.array(ball[0]) - np.array(center)) < 25:
-                        add_ball = False
-                        break
-                if not add_ball:
-                    continue
-                if radius > min_radius and radius < max_radius:
-                    cv2.circle(image_with_circles, center, radius, (0, 255, 0), 2)
-                    ball = (center, radius)
-                    balls_center_radius.append(ball)
+    for cnt in contours:
+        perimeter = cv2.arcLength(cnt, True)
+        area = cv2.contourArea(cnt)
+        if find_circularity(cnt, perimeter, area):
+            (x, y), radius = cv2.minEnclosingCircle(cnt)
+            center = (int(x), int(y))
+            radius = int(radius)
+            if radius > min_radius and radius < max_radius:
+                cv2.circle(image_with_circles, center, radius, (0, 255, 0), 2)
+                ball = (center, radius)
+                balls_center_radius.append(ball)
     return balls_center_radius, image_with_circles
 
 
@@ -79,17 +66,37 @@ def images_formats(image: Image) -> Tuple[Image, Image, Image, Image]:
     return rgb, hsv, bilateral_color, gray
 
 
-def find_cue(ball_image, contours):
+def find_linear_lines(contours, img_contours):
+    lines = cv2.HoughLinesP(img_contours, 1, np.pi / 180, 100, minLineLength=100, maxLineGap=10)
+    if lines is None:
+        return [], img_contours
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        cv2.line(img_contours, (x1, y1), (x2, y2), (255, 0, 0), 3)
+    return lines, img_contours
+
+def find_cue_2(ball_image, img_contours, contours):
+    lines, img_contours = find_linear_lines(contours, img_contours)
+    cv2.waitKey(0)
+    #find the longest line and return the two points of the line, and draw it on the images
     max_length = 0
     cue_contour = None
-    for cnt in contours:
-        approx, length = calculateContourLength(cnt)
+    if lines is None:
+        return ball_image, cue_contour
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        if y1<90 or y1>800:
+            continue
+        length = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         if length > max_length:
             max_length = length
-            cue_contour = approx
+            cue_contour = np.array([[x1, y1], [x2, y2]])
     if cue_contour is not None:
         cv2.drawContours(ball_image, [cue_contour], -1, Colors.GREEN, 3)
     return ball_image, cue_contour
+
+
+
 
 
 def calculateContourLength(cnt):
@@ -187,20 +194,23 @@ def create_ball_objects(ball_center_radius, original_image):
         if ball.color == Colors.WHITE:
             cue_ball = WhiteBall(ball.position, False, 15, ball.color, False)
             break
+    if not balls:
+        return None, None
     if cue_ball is None:
         cue_ball = WhiteBall(balls[0].position, False, 15, Colors.WHITE, False)
+
     return balls, cue_ball
 
 
 def create_cue_object(cue_contour, original_image, cue_ball_position):
-    x1, y1, x2, y2 = cue_contour[0][0][0], cue_contour[0][0][1], cue_contour[1][0][0], cue_contour[1][0][1]
+    x1, y1, x2, y2 = cue_contour[0][0], cue_contour[0][1], cue_contour[1][0], cue_contour[1][1]
     distance_1 = np.sqrt((x1 - cue_ball_position[0]) ** 2 + (y1 - cue_ball_position[1]) ** 2)
     distance_2 = np.sqrt((x2 - cue_ball_position[0]) ** 2 + (y2 - cue_ball_position[1]) ** 2)
     if distance_1 > distance_2:
-        direction = np.array([x1 - x2, y1 - y2])
-        cue_edge = np.array([x1, y1])
+        direction = np.array([x2-x1, y2 - y1])
+        cue_edge = np.array([x2, y2])
     else:
-        direction = np.array([x2 - x1, y2 - y1])
+        direction = np.array([x1 - x2, y1 - y2])
         cue_edge = np.array([x1, y1])
     cue = Cue(cue_edge, direction)
     return cue
@@ -215,72 +225,74 @@ def ball_objects(ball_center_radius, original_image: Image):
     return balls, cue_ball
 
 
-def cue_object(image_with_circles: Image, original_image: Image, contours, cue_ball: WhiteBall):
-    image_with_circles_and_cue, cue_contour = find_cue(image_with_circles, contours)
+def cue_object(image_with_circles: Image, original_image: Image, img_contours: Image, contours, cue_ball: WhiteBall):
+    image_with_circles_and_cue, cue_contour = find_cue_2(image_with_circles, img_contours, contours)
     if cue_contour is None:
-        return None
+        return None, None
     cue = create_cue_object(cue_contour, original_image, cue_ball.position)
-    return cue
-
-
-def mask_by_colors(image: Image):
-    red_mask = cv2.inRange(image, np.array([0, 0, 70]), np.array([255, 255, 255]))
-    green_mask = cv2.inRange(image, np.array([0, 70, 0]), np.array([255, 255, 255]))
-    blue_mask = cv2.inRange(image, np.array([70,0,0]), np.array([255, 255, 255]))
-    return red_mask, green_mask, blue_mask
+    return cue, image_with_circles_and_cue
 
 
 def find_contours(balls_image: Image, original_image: Image):
     subtracted_image = subtract_images(original_image, balls_image)
     rgb = cv2.cvtColor(subtracted_image, cv2.COLOR_BGR2RGB)
     bilateral_color = cv2.bilateralFilter(rgb, 9, 100, 20)
-    red_mask, green_mask, blue_mask = mask_by_colors(bilateral_color)
     mask_image = take_threshold(bilateral_color, 40)
-    masks = [red_mask, green_mask, blue_mask, mask_image]
-    img_contours_array = []
-    contours_array = []
-    for mask in masks:
-        erisioned_dilated_image = erision_dilation(mask, 3, 3)
-        contours, _ = cv2.findContours(erisioned_dilated_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        img_contours = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
-        cv2.drawContours(img_contours, contours, -1, Colors.WHITE, 1)
-        img_contours_array.append(img_contours)
-        contours_array.append(contours)
+    erisioned_dilated_image = erision_dilation(mask_image, 3, 3)
+    cv2.imshow("erisioned_dilated_image", erisioned_dilated_image)
+    cv2.waitKey(0)
+    contours, _ = cv2.findContours(erisioned_dilated_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    img_contours = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
+    img_contours_for_cue = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
+    cv2.drawContours(img_contours, contours, -1, Colors.WHITE, 1)
+    cv2.drawContours(img_contours_for_cue, contours, -1, Colors.WHITE, 1)
+    #blur much the imgae for cue and threshold that will make the lines more fat
+    img_contours_for_cue = cv2.GaussianBlur(img_contours_for_cue, (45,45), 0)
 
-    return img_contours_array, contours_array
+    img_contours_for_cue = cv2.threshold(img_contours_for_cue, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    img_contours_for_cue = cv2.dilate(img_contours_for_cue, np.ones((4, 4), np.uint8), iterations=1)
+    return img_contours, contours, img_contours_for_cue
 
 
-def find_balls_and_circle_them(contours):
+def find_balls_and_circle_them(contours, balls_image: Image):
     ball_center_radius, image_with_circles = find_circles(balls_image, contours)
     return ball_center_radius, image_with_circles
 
 
-def find_objects(balls_image: Image, original_image: Image):
-    img_contours, contours = find_contours(balls_image, original_image)
-    color_contours = [contours[0], contours[1], contours[2]]
-    color_img_contours = [img_contours[0], img_contours[1], img_contours[2]]
-    black_img_contours = img_contours[3]
-    for img_cnt in color_img_contours:
-        cv2.imshow("img_cnt", img_cnt)
-        cv2.waitKey(0)
-    black_contours = contours[3]
-    ball_center_radius, image_with_circles = find_balls_and_circle_them(color_contours)
-    cv2.imshow("image_with_circles", image_with_circles)
+def find_objects(balls_image: Image, original_image: Image, TEST = False):
+    cv2.imshow("balls_image", balls_image)
     cv2.waitKey(0)
+    img_contours, contours, img_contours_for_cue = find_contours(balls_image, original_image)
+    cv2.imshow("img_contours", img_contours)
+    cv2.waitKey(0)
+    ball_center_radius, image_with_circles = find_balls_and_circle_them(contours, balls_image)
     balls, cue_ball = ball_objects(ball_center_radius, original_image)
-    cue = cue_object(image_with_circles, original_image, black_contours, cue_ball)
+    cue, image_with_circles_and_cue = cue_object(image_with_circles, original_image, img_contours_for_cue, contours, cue_ball)
+    cv2.imshow("images", image_with_circles_and_cue)
+    cv2.waitKey(0)
+    if TEST:
+        return image_with_circles_and_cue
     return balls, cue_ball, cue
+
+def return_gradient_by_color(balls_image):
+    b, g, r = cv2.split(balls_image)
+
+    # Apply Sobel operator to each channel
+    sobelx_b = cv2.Sobel(b, cv2.CV_64F, 1, 0, ksize=5)
+    sobelx_g = cv2.Sobel(g, cv2.CV_64F, 1, 0, ksize=5)
+    sobelx_r = cv2.Sobel(r, cv2.CV_64F, 1, 0, ksize=5)
+    sobely_b = cv2.Sobel(b, cv2.CV_64F, 0, 1, ksize=5)
+    sobely_g = cv2.Sobel(g, cv2.CV_64F, 0, 1, ksize=5)
+    sobely_r = cv2.Sobel(r, cv2.CV_64F, 0, 1, ksize=5)
+    gradient_magnitude_b = np.sqrt(sobelx_b ** 2 + sobely_b ** 2)
+    gradient_magnitude_g = np.sqrt(sobelx_g ** 2 + sobely_g ** 2)
+    gradient_magnitude_r = np.sqrt(sobelx_r ** 2 + sobely_r ** 2)
+    gradient_magnitude = np.sqrt(gradient_magnitude_b ** 2 + gradient_magnitude_g ** 2 + gradient_magnitude_r ** 2)
+    cv2.imshow("gradient_magnitude", gradient_magnitude)
+    cv2.waitKey(0)
 
 
 if __name__ == '__main__':
-    board_image = cv2.imread(r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\image_transformation\images\WIN_20240222_09_04_29_Pro.jpg")
-    balls_image = cv2.imread(r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\image_transformation\images\WIN_20240222_09_05_19_Pro.jpg")
-    board_bilateral = cv2.bilateralFilter(board_image, 9, 100, 20)
-    #cv2.imshow("board", board_bilateral)
-    balls_bilateral = cv2.bilateralFilter(balls_image, 9, 100, 20)
-    #cv2.imshow("balls", balls_bilateral)
-    subtracted = subtract_images(board_image, balls_image, threshold=250)
-    cv2.imshow("Subtracted images", subtracted)
-    medianed = cv2.medianBlur(subtracted, 3)
-    cv2.imshow("medianed", medianed)
-    cv2.waitKey(0)
+    board_image = cv2.imread(r"images_test\WIN_20240222_09_04_29_Pro.jpg")
+    balls_image = cv2.imread(r"images_test\WIN_20240222_09_06_13_Pro.jpg")
+    find_objects(balls_image, board_image)
