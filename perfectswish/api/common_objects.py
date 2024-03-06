@@ -1,9 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
 from perfectswish.api.utils import Color, Colors
-
+import uuid
 
 @dataclass
 class Ball:
@@ -22,6 +22,7 @@ class Ball:
     radius: int = 15
     color: Color = Colors.WHITE
     in_pocket: bool = False
+    id: int = -1
 
 
 @dataclass
