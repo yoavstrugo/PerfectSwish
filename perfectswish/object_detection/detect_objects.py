@@ -53,8 +53,7 @@ def take_threshold(bilateral_color, threshold=40, balls_image=None):
     mask = np.any(bilateral_color > threshold, axis=-1).astype(np.uint8) * 255
     # every pixel that is black in the mask image, will be black in the balls image
     balls_image_subtracted = cv2.bitwise_and(balls_image, balls_image, mask=mask)
-    #show the image but small window, without cut it
-    cv2.imshow("balls_image_subtracted", cv2.resize(balls_image_subtracted, (0, 0), fx=0.5, fy=0.5))
+
     return mask
 
 
@@ -244,8 +243,6 @@ def find_contours(balls_image: Image, original_image: Image):
     bilateral_color = cv2.bilateralFilter(rgb, 9, 100, 20)
     mask_image = take_threshold(bilateral_color, 60, balls_image)
     erisioned_dilated_image = erision_dilation(mask_image, 3, 3)
-    cv2.imshow("erisioned_dilated_image", erisioned_dilated_image)
-    cv2.waitKey(0)
     contours, _ = cv2.findContours(erisioned_dilated_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     img_contours = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
     img_contours_for_cue = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
@@ -265,19 +262,13 @@ def find_balls_and_circle_them(contours, balls_image: Image):
 
 
 def find_objects(balls_image: Image, original_image: Image, TEST = False):
-    cv2.imshow("balls_image", balls_image)
-    cv2.waitKey(0)
     img_contours, contours, img_contours_for_cue = find_contours(balls_image, original_image)
-    cv2.imshow("img_contours", img_contours)
-    cv2.waitKey(0)
     ball_center_radius, image_with_circles = find_balls_and_circle_them(contours, balls_image)
-    cv2.imshow("image_with_circles", image_with_circles)
-    cv2.waitKey(0)
     balls, cue_ball = ball_objects(ball_center_radius, original_image)
     cue, image_with_circles_and_cue = cue_object(image_with_circles, original_image, img_contours_for_cue, contours, cue_ball)
     #show the image but in small window, without cut it
     image_with_circles_and_cue = cv2.resize(image_with_circles_and_cue, (0, 0), fx=0.5, fy=0.5)
-    cv2.imshow("image_with_circles_and_cue", image_with_circles_and_cue)
+
 
 
     cv2.waitKey(0)
@@ -299,8 +290,7 @@ def return_gradient_by_color(balls_image):
     gradient_magnitude_g = np.sqrt(sobelx_g ** 2 + sobely_g ** 2)
     gradient_magnitude_r = np.sqrt(sobelx_r ** 2 + sobely_r ** 2)
     gradient_magnitude = np.sqrt(gradient_magnitude_b ** 2 + gradient_magnitude_g ** 2 + gradient_magnitude_r ** 2)
-    cv2.imshow("gradient_magnitude", gradient_magnitude)
-    cv2.waitKey(0)
+
 
 
 if __name__ == '__main__':
