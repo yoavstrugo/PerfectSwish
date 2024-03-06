@@ -15,15 +15,18 @@ class CameraRectApp(gui_class.CalibrationApp):
     def __init__(self, image, set_rect, rect=None):
         super().__init__(image, set_rect, rect)
         self.counter = 0
+        # canvas contains the original image and the rectangle
         self.canvas = tk.Canvas(self.root, width=int(self.image.shape[1] * self.scale_factor), height=int(self.image.shape[0] * self.scale_factor))
         self.canvas.pack(side=tk.LEFT, padx=10, pady=10)
         # Create a button for saving the image
         self.save_black_bg_button = tk.Button(self.root, text="Save Board Black bg", command=self.save_black_bg)
         self.save_black_bg_button.pack(side=tk.TOP, pady=10)
+        self.transform_and_display()
         self.draw_rect()
 
     def _transformation_func(self, image, rect):
         return transform_board(image, rect)
+
     def draw_rect(self):
         # Draw the original image on the original canvas
         image_rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)

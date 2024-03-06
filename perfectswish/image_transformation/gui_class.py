@@ -5,24 +5,28 @@ from PIL import ImageTk, Image
 
 
 class CalibrationApp:
-    def __init__(self, image, set_rect, rect=None):
+    def __init__(self, image, set_rect, rect=None, scale_factor=0.4):
         self.root = tk.Tk()
         self.root.title("Adjustment App")
 
         self.image = image
         self.set_rect = set_rect
-        self.scale_factor = 0.4
+        self.scale_factor = scale_factor
 
-        self.root.geometry(f"{int(1600)}x{int(600)}")
-        if rect:
+        self.root.geometry(f"{int(1200)}x{int(600)}")
+        if rect is not None:
             rect = self.scale_factor * rect
         else:
             rect = [int(0.4 * x) for x in [817, 324, 1186, 329, 1364, 836, 709, 831]]
         self.rect = rect
 
+        # Create a button for saving the image
+        self.save_image_button = tk.Button(self.root, text="Save Image", command=self.save_rect)
+        self.save_image_button.pack(side=tk.TOP, pady=10)
+
         self.canvas_transformed = tk.Canvas(self.root, width=int(self.image.shape[1] * self.scale_factor),
                                             height=int(self.image.shape[0] * self.scale_factor))
-        self.canvas_transformed.pack(side=tk.LEFT, padx=10, pady=10)
+        self.canvas_transformed.pack(side=tk.TOP, padx=10, pady=10,fill="x")
 
         self.cropped_image = None
 
@@ -32,10 +36,6 @@ class CalibrationApp:
         self.root.bind("<Up>", self.on_up_arrow)
         self.root.bind("<Down>", self.on_down_arrow)
         self.root.bind("<Escape>", lambda event: self.save_rect())
-
-        # Create a button for saving the image
-        self.save_image_button = tk.Button(self.root, text="Save Image", command=self.save_rect)
-        self.save_image_button.pack(side=tk.TOP, pady=10)
 
     def draw_rect(self):
         raise NotImplementedError
