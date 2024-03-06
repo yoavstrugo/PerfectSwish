@@ -96,7 +96,6 @@ def main_loop(cap: cv2.VideoCapture, camera_rect: list, projector_rect: list, em
     visualized_image = visualize_pool_board(board, path=path, direction_vectors=direction_vectors, balls=balls)
 
     projection = generate_projection(visualized_image, projector_rect)
-
     return projection
 
 def create_controls(root, return_values, cap):

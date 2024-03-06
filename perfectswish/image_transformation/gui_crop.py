@@ -17,9 +17,11 @@ class CameraRectApp(gui_class.CalibrationApp):
         super().__init__(image, set_rect, rect)
         self.counter = 0
         # canvas contains the original image and the rectangle
+        cv2.imshow("image", self.image)
+        cv2.waitKey(0)
         self.canvas = tk.Canvas(self.root, width=int(self.image.shape[1] * self.scale_factor),
                                 height=int(self.image.shape[0] * self.scale_factor))
-        self.canvas.pack(side=tk.LEFT, padx=10, pady=10)
+        self.canvas.pack(side=tk.RIGHT, padx=20, pady=10, expand=True, fill=tk.BOTH)
         # Create a button for saving the image
         self.save_black_bg_button = tk.Button(self.root, text="Save Board Black bg", command=self.save_black_bg)
         self.save_black_bg_button.pack(side=tk.TOP, pady=10)
