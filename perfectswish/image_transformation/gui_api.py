@@ -12,3 +12,4 @@ def get_rect(image, AdjustmentApp, initial_rect=None):
     except ValueError as e:
         print(f"error: {e}")
     return current_rec[0]
+

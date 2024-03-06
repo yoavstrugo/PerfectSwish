@@ -22,7 +22,6 @@ class RectAdjustmentAppProjection:
         self.selected_corner = None
         self.scale_factor = 0.5
 
-
         self.rect = np.array(rect)
 
         self.root = tk.Tk()
@@ -40,11 +39,6 @@ class RectAdjustmentAppProjection:
         self.canvas_original = tk.Canvas(self.root, width=max_width, height=max_height)
         self.canvas_original.pack(side=tk.LEFT, padx=10, pady=10)
 
-        # Label to display rectangle parameters
-        self.label_var = tk.StringVar()
-        self.label_var.set(f"Rectangle Parameters: {[x / self.scale_factor for x in self.rect]}")
-        self.label = tk.Label(self.root, textvariable=self.label_var)
-        self.label.pack(side=tk.TOP, pady=10)
 
         # Determine the scaling factor
         scale_factor_width = max_width / self.image.shape[1]
@@ -69,7 +63,7 @@ class RectAdjustmentAppProjection:
         self.load_button.pack(side=tk.TOP, pady=10)
 
         # Create a window for displaying the cropped image
-        self.cropped_image_window = tk.Toplevel(self.root)
+        self.canvas_transformed = tk.Toplevel(self.root)
         self.initialize_cropped_image_window()
 
         # Call the draw_rect and update_webcam functions periodically
@@ -77,9 +71,9 @@ class RectAdjustmentAppProjection:
 
     def initialize_cropped_image_window(self):
         # Set the window attributes
-        self.cropped_image_window.attributes('-fullscreen', True)  # Set to fullscreen
-        # self.cropped_image_window.attributes('-topmost', True)  # Bring to front
-        # self.cropped_image_window.attributes('-alpha', 0.7)  # Set transparency (adjust as needed)
+        self.canvas_transformed.attributes('-fullscreen', True)  # Set to fullscreen
+        # self.canvas_transformed.attributes('-topmost', True)  # Bring to front
+        # self.canvas_transformed.attributes('-alpha', 0.7)  # Set transparency (adjust as needed)
 
         # Get screen dimensions
         screen_width = self.root.winfo_screenwidth()
@@ -90,10 +84,10 @@ class RectAdjustmentAppProjection:
         second_screen_y = 0  # Y-coordinate for the second screen
 
         # Set the initial position of the window
-        self.cropped_image_window.geometry(f"+{second_screen_x}+{second_screen_y}")
+        self.canvas_transformed.geometry(f"+{second_screen_x}+{second_screen_y}")
 
         # Create a canvas for displaying the cropped image
-        self.cropped_image_canvas = tk.Canvas(self.cropped_image_window)
+        self.cropped_image_canvas = tk.Canvas(self.canvas_transformed)
         self.cropped_image_canvas.pack(fill=tk.BOTH, expand=tk.YES)
 
     def draw_rect(self):
@@ -101,9 +95,6 @@ class RectAdjustmentAppProjection:
         self.transform_and_display()
         # Update the Tkinter window
         self.root.update()
-
-        # Update the label with the current rectangle parameters
-        self.label_var.set(f"Rectangle Parameters: {[int(x / self.scale_factor) for x in self.rect]}")
 
         # Display the cropped_image in the borderless and fullscreen window
         if self.cropped_image is not None:
