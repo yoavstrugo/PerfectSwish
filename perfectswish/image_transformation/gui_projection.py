@@ -236,7 +236,7 @@ class RectAdjustmentAppProjection:
 
 
 def get_projection_rect(image, initial_rect=None):
-    return get_rect(image, ProjectionRectApp, initial_rect=initial_rect)
+    return get_rect(image, ProjectionRectApp, initial_rect=None)
 
 
 if __name__ == '__main__':
