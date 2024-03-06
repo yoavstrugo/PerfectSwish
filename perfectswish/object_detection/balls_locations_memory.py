@@ -18,7 +18,8 @@ def return_balls_list(recent_balls_list: List[List[Ball]], id_to_ball: dict[int,
         for ball in frame:
             for ball_2_id in balls_times_dict.keys():
                 ball_2 = id_to_ball[ball_2_id]
-                if np.linalg.norm(ball.position - ball_2.position) < 10 and ball.id != ball_2.id:
+                if np.linalg.norm(ball.position - ball_2.position) < 50 and ball.id != ball_2.id:
+                    print(f"ball {ball.id} is close to ball {ball_2.id}")
                     balls_times_dict[ball.id] += 1
                     break
             balls_times_dict[ball.id] = 1
@@ -50,6 +51,7 @@ def find_balls_list_and_avarage_list():
         for ball in balls:
             ball.id = i
             id_to_ball[i] = ball
+            i += 1
         recent_balls_list.append(balls)
 
     balls_list_and_avarge_list = []
