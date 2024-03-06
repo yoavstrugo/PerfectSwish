@@ -17,7 +17,7 @@ class LiveImageDisplay:
 
     def __init__(self, main_loop, *args, framerate=FPS, window_name: str = '',
                  display_last_image: bool = False, borderless: bool = False,
-                 width=WIDTH, height=HEIGHT):
+                 width=WIDTH, height=HEIGHT, display_on_second_monitor: bool = False):
         """
         A class which continuously displays images from a main loop.
         :param main_loop: A function which returns an image.
@@ -45,7 +45,10 @@ class LiveImageDisplay:
 
         self._root = tk.Tk()
         self._root.title(window_name)
-        self._root.attributes("-fullscreen", borderless)
+        if borderless:
+            self._root.overrideredirect(True)
+        if display_on_second_monitor:
+            self._root.geometry(f"{self.__width}x{self.__height}+1920+0")  # i assume the first monitor is 1920x1080
 
         self._canvas = tk.Canvas(self._root, width=self.__width, height=self.__height)
         self._canvas.pack()

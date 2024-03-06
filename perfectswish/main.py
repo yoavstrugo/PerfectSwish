@@ -134,7 +134,7 @@ def main():
     liveImageDisplay = LiveImageDisplay(main_loop, cap, camera_rect, projector_rect, empty_image_transformed,
                                         window_name="Perfect Swish", framerate=30, display_last_image=True,
                                         borderless=True,
-                                        height=1080, width=1920)
+                                        height=1080, width=1920, display_on_second_monitor=True)
 
     liveImageDisplay.run()
 
