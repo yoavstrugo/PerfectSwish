@@ -1,22 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
-
-class Color:
-    """
-    Represents the color of a ball in the pool game.
-    """
-    WHITE = (255, 255, 255)
-    YELLOW = (0, 255, 255)
-    BLUE = (255, 0, 0)
-    RED = (0, 0, 255)
-    PURPLE = (255, 0, 255)
-    ORANGE = (0, 165, 255)
-    GREEN = (0, 255, 0)
-    BROWN = (42, 42, 165)
-    BLACK = (0, 0, 0)
-
+from perfectswish.api.utils import Color, Colors
+import uuid
 
 @dataclass
 class Ball:
@@ -33,8 +20,9 @@ class Ball:
     position: np.array
     stripped: bool = False
     radius: int = 15
-    color: Color = Color.WHITE
+    color: Color = Colors.WHITE
     in_pocket: bool = False
+    id: int = -1
 
 
 @dataclass
