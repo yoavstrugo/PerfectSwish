@@ -1,6 +1,7 @@
 import tkinter as tk
 
 import cv2
+import numpy as np
 from PIL import ImageTk, Image
 
 
@@ -13,7 +14,9 @@ class CalibrationApp:
         self.set_rect = set_rect
         self.scale_factor = scale_factor
 
-        self.root.geometry(f"{int(1200)}x{int(600)}")
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        self.root.geometry(f"{screen_width}x{screen_height}+0+0")
         if rect is not None:
             rect = self.scale_factor * rect
         else:
@@ -26,12 +29,14 @@ class CalibrationApp:
 
         self.canvas_transformed = tk.Canvas(self.root, width=int(self.image.shape[1] * self.scale_factor),
                                             height=int(self.image.shape[0] * self.scale_factor))
-        self.canvas_transformed.pack(side=tk.TOP, padx=10, pady=10,fill="x")
+        self.canvas_transformed.pack(side=tk.LEFT, padx=10, pady=10, fill="x")
 
         self.cropped_image = None
 
         # Variables for drag-and-drop functionality
         self.drag_data = {'x': 0, 'y': 0, 'item': None}
+        # set a default value:
+        self.selected_corner = None
 
         # Bindings for mouse events
         self.canvas_transformed.bind("<ButtonPress-1>", self.on_canvas_click)
@@ -44,7 +49,6 @@ class CalibrationApp:
         self.root.bind("<Up>", self.on_up_arrow)
         self.root.bind("<Down>", self.on_down_arrow)
         self.root.bind("<Escape>", lambda event: self.save_rect())
-
 
     def draw_rect(self):
         raise NotImplementedError
@@ -80,8 +84,6 @@ class CalibrationApp:
             self.drag_data['x'] = event.x
             self.drag_data['y'] = event.y
 
-            # Redraw the rectangle and display the transformed image
-            self.draw_rect()
             self.transform_and_display()
 
     def on_release(self, event):
@@ -113,6 +115,7 @@ class CalibrationApp:
 
     def _transformation_func(self, image, rect):
         raise NotImplementedError
+
     def transform_and_display(self):
         # Transform the image using the specified rectangle
         actual_rect = [int(x / self.scale_factor) for x in self.rect]
@@ -139,7 +142,11 @@ class CalibrationApp:
 if __name__ == '__main__':
     path = r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\image_transformation\images\blank_board.jpg"
     image = cv2.imread(path)
+
+
     def get_rect(rect):
         print(rect)
+
+
     app = CalibrationApp(image, get_rect)
     app.root.mainloop()

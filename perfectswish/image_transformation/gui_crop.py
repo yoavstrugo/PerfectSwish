@@ -10,13 +10,15 @@ from perfectswish.image_transformation.image_processing import transform_board, 
 
 from perfectswish.image_transformation import gui_class
 
+
 class CameraRectApp(gui_class.CalibrationApp):
 
     def __init__(self, image, set_rect, rect=None):
         super().__init__(image, set_rect, rect)
         self.counter = 0
         # canvas contains the original image and the rectangle
-        self.canvas = tk.Canvas(self.root, width=int(self.image.shape[1] * self.scale_factor), height=int(self.image.shape[0] * self.scale_factor))
+        self.canvas = tk.Canvas(self.root, width=int(self.image.shape[1] * self.scale_factor),
+                                height=int(self.image.shape[0] * self.scale_factor))
         self.canvas.pack(side=tk.LEFT, padx=10, pady=10)
         # Create a button for saving the image
         self.save_black_bg_button = tk.Button(self.root, text="Save Board Black bg", command=self.save_black_bg)
@@ -58,6 +60,8 @@ class CameraRectApp(gui_class.CalibrationApp):
         image_with_black = generate_projection(transformed_image, actual_rect)
         cv2.imwrite(fr"black_bg{self.counter}.jpg", image_with_black)
         self.counter += 1
+
+
 #
 # class RectAdjustmentApp:
 #     def __init__(self, image, set_rect, rect=None):
@@ -244,11 +248,13 @@ def get_camera_rect(image, initial_rect=None):
 #     print(get_camera_rect(image_in, initial_rect))
 
 
-
 if __name__ == '__main__':
     path = r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\image_transformation\images\blank_board.jpg"
     image = cv2.imread(path)
+
     def get_rect(rect):
         print(rect)
+
+
     app = CameraRectApp(image, get_rect)
     app.root.mainloop()

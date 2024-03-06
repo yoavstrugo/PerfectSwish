@@ -1,8 +1,12 @@
+import numpy as np
+
+
 def get_rect(image, AdjustmentApp, initial_rect=None):
     if initial_rect is None:
         initial_rect = [int(0.4 * x) for x in
                         [817, 324, 1186, 329, 1364, 836, 709, 831]]  # Initial rectangle coordinates
     current_rec = [None]  # something mutable
+    initial_rect = np.array(initial_rect)
     try:
         def set_rect(cam_rect):
             current_rec[0] = cam_rect
