@@ -220,19 +220,7 @@ def create_cue_object(cue_contour, original_image, cue_ball_position):
     return cue
 
 
-def find_objects(balls_image: Image, original_image: Image):
-    ball_center_radius, image_with_circles, img_contours, contours = find_balls(balls_image, original_image)
-    image_with_circles_and_cue, cue_contour = find_cue(image_with_circles, contours)
-    balls, cue_ball = create_ball_objects(ball_center_radius, original_image)
-    if cue_ball is None:
-        return balls, None, None
-    cue = create_cue_object(cue_contour, original_image, cue_ball.position)
-    return balls, cue_ball, cue
-
-
-def ball_objects(balls_image: Image, original_image: Image):
-    ball_center_radius, image_with_circles, img_contours, contours = find_balls(balls_image, original_image)
-
+def ball_objects(ball_center_radius, original_image: Image):
     balls, cue_ball = create_ball_objects(ball_center_radius, original_image)
     if cue_ball is None:
         return None, None
@@ -279,6 +267,9 @@ def find_objects(balls_image: Image, original_image: Image, TEST = False):
     balls, cue_ball = ball_objects(ball_center_radius, original_image)
     cue, image_with_circles_and_cue = cue_object(image_with_circles, original_image, img_contours_for_cue, contours, cue_ball)
     #show the image but in small window, without cut it
+    image_with_circles_and_cue = cv2.resize(image_with_circles_and_cue, (0, 0), fx=0.5, fy=0.5)
+
+
 
     cv2.waitKey(0)
     if TEST:
@@ -303,6 +294,7 @@ def return_gradient_by_color(balls_image):
 
 
 if __name__ == '__main__':
+    # Made a new branch! :)
     board_image = cv2.imread(r"detect_objects_test_images\blank.jpg")
     balls_image = cv2.imread(r"detect_objects_test_images\triangle_without_triangle.jpg")
     find_objects(balls_image, board_image)
