@@ -30,12 +30,21 @@ class CalibrationApp:
 
         self.cropped_image = None
 
+        # Variables for drag-and-drop functionality
+        self.drag_data = {'x': 0, 'y': 0, 'item': None}
+
+        # Bindings for mouse events
+        self.canvas_transformed.bind("<ButtonPress-1>", self.on_canvas_click)
+        self.canvas_transformed.bind("<B1-Motion>", self.on_drag)
+        self.canvas_transformed.bind("<ButtonRelease-1>", self.on_release)
+
         self.root.bind("<Button-1>", self.on_canvas_click)
         self.root.bind("<Left>", self.on_left_arrow)
         self.root.bind("<Right>", self.on_right_arrow)
         self.root.bind("<Up>", self.on_up_arrow)
         self.root.bind("<Down>", self.on_down_arrow)
         self.root.bind("<Escape>", lambda event: self.save_rect())
+
 
     def draw_rect(self):
         raise NotImplementedError
@@ -51,6 +60,35 @@ class CalibrationApp:
                 selected_corner = i
         # Select the corner with the smallest distance
         self.selected_corner = selected_corner
+        # Set initial drag data
+        self.drag_data['item'] = self.canvas_transformed.create_oval(
+            event.x - 5, event.y - 5, event.x + 5, event.y + 5, fill='red')
+        self.drag_data['x'] = event.x
+        self.drag_data['y'] = event.y
+
+    def on_drag(self, event):
+        if self.drag_data['item']:
+            # Calculate the delta
+            delta_x = event.x - self.drag_data['x']
+            delta_y = event.y - self.drag_data['y']
+
+            # Move the selected corner
+            self.rect[self.selected_corner] += delta_x
+            self.rect[self.selected_corner + 1] += delta_y
+
+            # Update drag data
+            self.drag_data['x'] = event.x
+            self.drag_data['y'] = event.y
+
+            # Redraw the rectangle and display the transformed image
+            self.draw_rect()
+            self.transform_and_display()
+
+    def on_release(self, event):
+        if self.drag_data['item']:
+            # Remove the temporary oval
+            self.canvas_transformed.delete(self.drag_data['item'])
+            self.drag_data['item'] = None
 
     def on_left_arrow(self, event):
         self.adjust_selected_corner(-1, 0)
