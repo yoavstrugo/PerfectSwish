@@ -16,7 +16,7 @@ class CalibrationApp:
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        self.root.geometry(f"{screen_width}x{screen_height}+0+0")
+        self.root.geometry(f"{screen_width-10}x{screen_height}+0+0")
         if rect is not None:
             rect = self.scale_factor * rect
         else:
@@ -29,7 +29,7 @@ class CalibrationApp:
 
         self.canvas_transformed = tk.Canvas(self.root, width=int(self.image.shape[1] * self.scale_factor),
                                             height=int(self.image.shape[0] * self.scale_factor))
-        self.canvas_transformed.pack(side=tk.LEFT, padx=10, pady=10, fill="x")
+        self.canvas_transformed.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
 
         self.cropped_image = None
 
@@ -143,10 +143,8 @@ if __name__ == '__main__':
     path = r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\image_transformation\images\blank_board.jpg"
     image = cv2.imread(path)
 
-
     def get_rect(rect):
         print(rect)
-
 
     app = CalibrationApp(image, get_rect)
     app.root.mainloop()

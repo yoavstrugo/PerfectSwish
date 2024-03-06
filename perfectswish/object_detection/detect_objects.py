@@ -23,7 +23,6 @@ def find_circularity(cnt, perimeter, area, circularity_thersold=0.3):
     return False
 
 
-
 def find_circles(balls_image, contours, min_radius=9, max_radius=25):
     balls_center_radius = []
     image_with_circles = balls_image.copy()
@@ -78,17 +77,18 @@ def find_linear_lines(contours, img_contours):
         cv2.line(img_contours, (x1, y1), (x2, y2), (255, 0, 0), 3)
     return lines, img_contours
 
+
 def find_cue_2(ball_image, img_contours, contours):
     lines, img_contours = find_linear_lines(contours, img_contours)
     cv2.waitKey(0)
-    #find the longest line and return the two points of the line, and draw it on the images
+    # find the longest line and return the two points of the line, and draw it on the images
     max_length = 0
     cue_contour = None
     if lines is None:
         return ball_image, cue_contour
     for line in lines:
         x1, y1, x2, y2 = line[0]
-        if (y1<70 or y1>1000) or (y2<70 or y2>1000) or (x1<70 or x1>1800) or (x2<70 or x2>1800):
+        if (y1 < 70 or y1 > 1000) or (y2 < 70 or y2 > 1000) or (x1 < 70 or x1 > 1800) or (x2 < 70 or x2 > 1800):
             if np.arctan2(y2 - y1, x2 - x1) < 0.1 or np.arctan2(y2 - y1, x2 - x1) > 1.5:
                 continue
         length = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
@@ -98,9 +98,6 @@ def find_cue_2(ball_image, img_contours, contours):
     if cue_contour is not None:
         cv2.drawContours(ball_image, [cue_contour], -1, Colors.GREEN, 3)
     return ball_image, cue_contour
-
-
-
 
 
 def calculateContourLength(cnt):
@@ -191,17 +188,17 @@ def create_ball_objects(ball_center_radius, original_image):
         center = center_radius[0]
         radius = center_radius[1]
         color, stripped = find_ball_color(original_image, center, radius)
-        ball = Ball(center, False, 15, color, False)
+        ball = Ball(np.array(center), False, 15, color, False)
         balls.append(ball)
     cue_ball = None
     for ball in balls:
         if ball.color == Colors.WHITE:
-            cue_ball = WhiteBall(ball.position, False, 15, ball.color, False)
+            cue_ball = WhiteBall(np.array(ball.position), False, 15, ball.color, False)
             break
     if not balls:
         return None, None
     if cue_ball is None:
-        cue_ball = WhiteBall(balls[0].position, False, 15, Colors.WHITE, False)
+        cue_ball = WhiteBall(np.array(balls[0].position), False, 15, Colors.WHITE, False)
 
     return balls, cue_ball
 
@@ -211,7 +208,7 @@ def create_cue_object(cue_contour, original_image, cue_ball_position):
     distance_1 = np.sqrt((x1 - cue_ball_position[0]) ** 2 + (y1 - cue_ball_position[1]) ** 2)
     distance_2 = np.sqrt((x2 - cue_ball_position[0]) ** 2 + (y2 - cue_ball_position[1]) ** 2)
     if distance_1 > distance_2:
-        direction = np.array([x2-x1, y2 - y1])
+        direction = np.array([x2 - x1, y2 - y1])
         cue_edge = np.array([x2, y2])
     else:
         direction = np.array([x1 - x2, y1 - y2])
@@ -220,19 +217,7 @@ def create_cue_object(cue_contour, original_image, cue_ball_position):
     return cue
 
 
-def find_objects(balls_image: Image, original_image: Image):
-    ball_center_radius, image_with_circles, img_contours, contours = find_balls(balls_image, original_image)
-    image_with_circles_and_cue, cue_contour = find_cue(image_with_circles, contours)
-    balls, cue_ball = create_ball_objects(ball_center_radius, original_image)
-    if cue_ball is None:
-        return balls, None, None
-    cue = create_cue_object(cue_contour, original_image, cue_ball.position)
-    return balls, cue_ball, cue
-
-
-def ball_objects(balls_image: Image, original_image: Image):
-    ball_center_radius, image_with_circles, img_contours, contours = find_balls(balls_image, original_image)
-
+def ball_objects(ball_center_radius, original_image: Image):
     balls, cue_ball = create_ball_objects(ball_center_radius, original_image)
     if cue_ball is None:
         return None, None
@@ -260,8 +245,8 @@ def find_contours(balls_image: Image, original_image: Image):
     img_contours_for_cue = np.zeros(erisioned_dilated_image.shape, dtype=np.uint8)
     cv2.drawContours(img_contours, contours, -1, Colors.WHITE, 1)
     cv2.drawContours(img_contours_for_cue, contours, -1, Colors.WHITE, 1)
-    #blur much the imgae for cue and threshold that will make the lines more fat
-    img_contours_for_cue = cv2.GaussianBlur(img_contours_for_cue, (45,45), 0)
+    # blur much the imgae for cue and threshold that will make the lines more fat
+    img_contours_for_cue = cv2.GaussianBlur(img_contours_for_cue, (45, 45), 0)
 
     img_contours_for_cue = cv2.threshold(img_contours_for_cue, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     img_contours_for_cue = cv2.dilate(img_contours_for_cue, np.ones((4, 4), np.uint8), iterations=1)
@@ -273,17 +258,18 @@ def find_balls_and_circle_them(contours, balls_image: Image):
     return ball_center_radius, image_with_circles
 
 
-def find_objects(balls_image: Image, original_image: Image, TEST = False):
+def find_objects(balls_image: Image, original_image: Image, TEST=False):
     img_contours, contours, img_contours_for_cue = find_contours(balls_image, original_image)
     ball_center_radius, image_with_circles = find_balls_and_circle_them(contours, balls_image)
     balls, cue_ball = ball_objects(ball_center_radius, original_image)
-    cue, image_with_circles_and_cue = cue_object(image_with_circles, original_image, img_contours_for_cue, contours, cue_ball)
-    #show the image but in small window, without cut it
+    cue, image_with_circles_and_cue = cue_object(image_with_circles, original_image, img_contours_for_cue, contours,
+                                                 cue_ball)
 
     cv2.waitKey(0)
     if TEST:
         return image_with_circles_and_cue
     return balls, cue_ball, cue
+
 
 def return_gradient_by_color(balls_image):
     b, g, r = cv2.split(balls_image)
@@ -301,8 +287,8 @@ def return_gradient_by_color(balls_image):
     gradient_magnitude = np.sqrt(gradient_magnitude_b ** 2 + gradient_magnitude_g ** 2 + gradient_magnitude_r ** 2)
 
 
-
 if __name__ == '__main__':
+    # Made a new branch! :)
     board_image = cv2.imread(r"detect_objects_test_images\blank.jpg")
     balls_image = cv2.imread(r"detect_objects_test_images\triangle_without_triangle.jpg")
     find_objects(balls_image, board_image)
