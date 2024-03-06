@@ -267,9 +267,6 @@ def find_objects(balls_image: Image, original_image: Image, TEST = False):
     balls, cue_ball = ball_objects(ball_center_radius, original_image)
     cue, image_with_circles_and_cue = cue_object(image_with_circles, original_image, img_contours_for_cue, contours, cue_ball)
     #show the image but in small window, without cut it
-    image_with_circles_and_cue = cv2.resize(image_with_circles_and_cue, (0, 0), fx=0.5, fy=0.5)
-
-
 
     cv2.waitKey(0)
     if TEST:
