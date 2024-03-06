@@ -294,6 +294,7 @@ def return_gradient_by_color(balls_image):
 
 
 if __name__ == '__main__':
+    # Made a new branch! :)
     board_image = cv2.imread(r"detect_objects_test_images\blank.jpg")
     balls_image = cv2.imread(r"detect_objects_test_images\triangle_without_triangle.jpg")
     find_objects(balls_image, board_image)
