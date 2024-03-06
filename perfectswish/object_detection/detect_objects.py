@@ -49,8 +49,12 @@ def erision_dilation(mask, kernel_e_num: int, kernel_d_num: int):
     return mask
 
 
-def take_threshold(bilateral_color, threshold=40):
+def take_threshold(bilateral_color, threshold=40, balls_image=None):
     mask = np.any(bilateral_color > threshold, axis=-1).astype(np.uint8) * 255
+    # every pixel that is black in the mask image, will be black in the balls image
+    balls_image_subtracted = cv2.bitwise_and(balls_image, balls_image, mask=mask)
+    #show the image but small window, without cut it
+    cv2.imshow("balls_image_subtracted", cv2.resize(balls_image_subtracted, (0, 0), fx=0.5, fy=0.5))
     return mask
 
 
@@ -85,8 +89,9 @@ def find_cue_2(ball_image, img_contours, contours):
         return ball_image, cue_contour
     for line in lines:
         x1, y1, x2, y2 = line[0]
-        if y1<90 or y1>800:
-            continue
+        if (y1<70 or y1>1000) or (y2<70 or y2>1000) or (x1<70 or x1>1800) or (x2<70 or x2>1800):
+            if np.arctan2(y2 - y1, x2 - x1) < 0.1 or np.arctan2(y2 - y1, x2 - x1) > 1.5:
+                continue
         length = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         if length > max_length:
             max_length = length
@@ -228,7 +233,7 @@ def ball_objects(ball_center_radius, original_image: Image):
 def cue_object(image_with_circles: Image, original_image: Image, img_contours: Image, contours, cue_ball: WhiteBall):
     image_with_circles_and_cue, cue_contour = find_cue_2(image_with_circles, img_contours, contours)
     if cue_contour is None:
-        return None, None
+        return None, image_with_circles_and_cue
     cue = create_cue_object(cue_contour, original_image, cue_ball.position)
     return cue, image_with_circles_and_cue
 
@@ -237,7 +242,7 @@ def find_contours(balls_image: Image, original_image: Image):
     subtracted_image = subtract_images(original_image, balls_image)
     rgb = cv2.cvtColor(subtracted_image, cv2.COLOR_BGR2RGB)
     bilateral_color = cv2.bilateralFilter(rgb, 9, 100, 20)
-    mask_image = take_threshold(bilateral_color, 40)
+    mask_image = take_threshold(bilateral_color, 60, balls_image)
     erisioned_dilated_image = erision_dilation(mask_image, 3, 3)
     cv2.imshow("erisioned_dilated_image", erisioned_dilated_image)
     cv2.waitKey(0)
@@ -266,9 +271,15 @@ def find_objects(balls_image: Image, original_image: Image, TEST = False):
     cv2.imshow("img_contours", img_contours)
     cv2.waitKey(0)
     ball_center_radius, image_with_circles = find_balls_and_circle_them(contours, balls_image)
+    cv2.imshow("image_with_circles", image_with_circles)
+    cv2.waitKey(0)
     balls, cue_ball = ball_objects(ball_center_radius, original_image)
     cue, image_with_circles_and_cue = cue_object(image_with_circles, original_image, img_contours_for_cue, contours, cue_ball)
-    cv2.imshow("images", image_with_circles_and_cue)
+    #show the image but in small window, without cut it
+    image_with_circles_and_cue = cv2.resize(image_with_circles_and_cue, (0, 0), fx=0.5, fy=0.5)
+    cv2.imshow("image_with_circles_and_cue", image_with_circles_and_cue)
+
+
     cv2.waitKey(0)
     if TEST:
         return image_with_circles_and_cue
@@ -293,6 +304,6 @@ def return_gradient_by_color(balls_image):
 
 
 if __name__ == '__main__':
-    board_image = cv2.imread(r"images_test\WIN_20240222_09_04_29_Pro.jpg")
-    balls_image = cv2.imread(r"images_test\WIN_20240222_09_06_13_Pro.jpg")
+    board_image = cv2.imread(r"detect_objects_test_images\blank.jpg")
+    balls_image = cv2.imread(r"detect_objects_test_images\triangle_without_triangle.jpg")
     find_objects(balls_image, board_image)
