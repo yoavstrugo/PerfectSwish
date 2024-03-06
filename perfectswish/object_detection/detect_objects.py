@@ -220,7 +220,19 @@ def create_cue_object(cue_contour, original_image, cue_ball_position):
     return cue
 
 
-def ball_objects(ball_center_radius, original_image: Image):
+def find_objects(balls_image: Image, original_image: Image):
+    ball_center_radius, image_with_circles, img_contours, contours = find_balls(balls_image, original_image)
+    image_with_circles_and_cue, cue_contour = find_cue(image_with_circles, contours)
+    balls, cue_ball = create_ball_objects(ball_center_radius, original_image)
+    if cue_ball is None:
+        return balls, None, None
+    cue = create_cue_object(cue_contour, original_image, cue_ball.position)
+    return balls, cue_ball, cue
+
+
+def ball_objects(balls_image: Image, original_image: Image):
+    ball_center_radius, image_with_circles, img_contours, contours = find_balls(balls_image, original_image)
+
     balls, cue_ball = create_ball_objects(ball_center_radius, original_image)
     if cue_ball is None:
         return None, None
