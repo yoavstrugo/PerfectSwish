@@ -96,7 +96,6 @@ def main_loop(cap: cv2.VideoCapture, camera_rect: list, projector_rect: list, em
     visualized_image = visualize_pool_board(board, path=path, direction_vectors=direction_vectors, balls=balls)
 
     projection = generate_projection(visualized_image, projector_rect)
-
     return projection
 
 def create_controls(root, return_values, cap):
@@ -134,7 +133,7 @@ def main():
     liveImageDisplay = LiveImageDisplay(main_loop, cap, camera_rect, projector_rect, empty_image_transformed,
                                         window_name="Perfect Swish", framerate=30, display_last_image=True,
                                         borderless=True,
-                                        height=1080, width=1920)
+                                        height=1080, width=1920, display_on_second_monitor=True)
 
     liveImageDisplay.run()
 

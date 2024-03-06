@@ -17,7 +17,7 @@ class LiveImageDisplay:
 
     def __init__(self, main_loop, *args, framerate=FPS, window_name: str = '',
                  display_last_image: bool = False, borderless: bool = False,
-                 width=WIDTH, height=HEIGHT):
+                 width=WIDTH, height=HEIGHT, display_on_second_monitor: bool = False, fullscreen=True):
         """
         A class which continuously displays images from a main loop.
         :param main_loop: A function which returns an image.
@@ -45,10 +45,23 @@ class LiveImageDisplay:
 
         self._root = tk.Tk()
         self._root.title(window_name)
-        self._root.attributes("-fullscreen", borderless)
+        if borderless:
+            self._root.overrideredirect(True)
+        if display_on_second_monitor:
+            second_screen_height = self._root.winfo_screenheight()
+            second_screen_width = self._root.winfo_screenwidth()
 
-        self._canvas = tk.Canvas(self._root, width=self.__width, height=self.__height)
-        self._canvas.pack()
+            # Set initial position for the second screen (adjust as needed)
+            second_screen_x = second_screen_width  # X-coordinate for the second screen
+            second_screen_y = 0  # Y-coordinate for the second screen
+            self._root.geometry(f"{second_screen_width}x{second_screen_height}+{second_screen_x}+{second_screen_y}")
+
+        if fullscreen:
+            self._canvas = tk.Canvas(self._root, width=self._root.winfo_screenwidth(), height= self._root.winfo_screenheight())
+            self._canvas.pack(fill=tk.BOTH, expand=tk.YES)
+        else:
+            self._canvas = tk.Canvas(self._root, width=self.__width, height=self.__height)
+            self._canvas.pack()
 
     def __check_image(self, image):
         """
@@ -96,7 +109,7 @@ class LiveImageDisplay:
 
     def __display_image(self, images):
         # display single image
-        image_resized = cv2.resize(images, (self.__width, self.__height))
+        image_resized = cv2.resize(images, (self._root.winfo_screenwidth(), self._root.winfo_screenheight()))
         image_tk = ImageTk.PhotoImage(image=Image.fromarray(image_resized))
         self._canvas.create_image(0, 0, anchor=tk.NW, image=image_tk)
         self.__image = image_tk
