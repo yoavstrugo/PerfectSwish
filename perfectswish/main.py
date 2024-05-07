@@ -1,20 +1,24 @@
+from typing import List
+
 import cv2
 import numpy as np
 import tkinter as tk
 
 from image_transformation.image_processing import find_board, generate_projection, transform_board
 from perfectswish.api import webcam
-from perfectswish.api.common_objects import VelocityVector
+from perfectswish.api.common_objects import VelocityVector, Ball
 from perfectswish.api.data_io import load_data, save_data
 from perfectswish.gui.live_image_display import LiveImageDisplay
 from perfectswish.gui.take_image_gui import take_image
 from perfectswish.image_transformation.gui_crop import get_camera_rect
 from perfectswish.image_transformation.gui_projection import get_projection_rect
+from perfectswish.object_detection.balls_locations_memory import get_avarage_balls_list
 from perfectswish.object_detection.detect_objects import find_objects
 from perfectswish.simulation import simulate
 from perfectswish.visualization.visualize import visualize_pool_board
 
 DATA_DIRECTORY = "data"
+
 
 def create_data_directory():
     """
@@ -24,6 +28,7 @@ def create_data_directory():
     import os
     if not os.path.exists(DATA_DIRECTORY):
         os.makedirs(DATA_DIRECTORY)
+
 
 def save_rects(camera_rect: list, projector_rect: list):
     """
@@ -57,6 +62,7 @@ def load_rects() -> tuple:
 
     return camera_rect, projector_rect
 
+
 def setup_rects(cap: cv2.VideoCapture) -> tuple:
     """
     Setup the camera and projector rects.
@@ -73,14 +79,16 @@ def setup_rects(cap: cv2.VideoCapture) -> tuple:
     return camera_rect, projector_rect
 
 
-def main_loop(cap: cv2.VideoCapture, camera_rect: list, projector_rect: list, empty_image_transformed: np.array) -> (
-                np.array):
+def main_loop(cap: cv2.VideoCapture, camera_rect: list, projector_rect: list, empty_image_transformed: np.array,
+              remember_balls_func: callable) -> (
+        np.array):
     webcam_image = get_board_image(cap)
 
     transformed_webcam_image = transform_board(webcam_image, camera_rect)
-    balls, cue_ball, cue = find_objects(transformed_webcam_image, empty_image_transformed)
+    balls_in, cue_ball, cue = find_objects(transformed_webcam_image, empty_image_transformed)
     board = find_board()
 
+    balls = remember_balls_func(balls_in, remember_balls_func)
 
     if not all([cue_ball, cue, balls]):
         return None
@@ -98,6 +106,7 @@ def main_loop(cap: cv2.VideoCapture, camera_rect: list, projector_rect: list, em
     projection = generate_projection(visualized_image, projector_rect)
     return projection
 
+
 def create_controls(root, return_values, cap):
     def set_image():
         return_values['image'] = webcam.get_webcam_image(cap)
@@ -113,15 +122,18 @@ def create_controls(root, return_values, cap):
 
     return canvas, [button]
 
+
 def get_board_image(cap):
     return webcam.get_webcam_image(cap)
+
 
 def get_empty_image(cap):
     return take_image(cap, "Take image with empty table")
 
+
 def main():
     try:
-        cap = webcam.initialize_webcam()
+        cap = webcam.initialize_webcam(index=1)
         camera_rect, projector_rect = setup_rects(cap)
         empty_image = get_empty_image(cap)
         empty_image_transformed = transform_board(empty_image, camera_rect)
@@ -130,12 +142,31 @@ def main():
         print(e)
         return
 
-    liveImageDisplay = LiveImageDisplay(main_loop, cap, camera_rect, projector_rect, empty_image_transformed,
+    balls_list = []
+    def add_to_balls_list(balls):
+        nonlocal balls_list
+        balls_list = remember_balls(balls, balls_list)
+        return balls_list
+
+    liveImageDisplay = LiveImageDisplay(main_loop, cap, camera_rect, projector_rect, empty_image_transformed, add_to_balls_list,
                                         window_name="Perfect Swish", framerate=30, display_last_image=True,
                                         borderless=True,
                                         height=1080, width=1920, display_on_second_monitor=True)
 
     liveImageDisplay.run()
+
+
+def remember_balls(balls: List[Ball], balls_list: List[List[Ball]]):
+    """
+    Remember the balls in the balls list.
+    :param balls: The balls to remember.
+    :param balls_list: The list of balls lists to remember the balls in.
+    :return:
+    """
+    balls_list.append(balls)
+    if len(balls_list) > 10:
+        balls_list.pop(0)
+    return get_avarage_balls_list(balls_list)
 
 
 if __name__ == '__main__':

@@ -3,7 +3,6 @@ import numpy as np
 from perfectswish.api.common_objects import Ball
 from typing import Union, List, Tuple
 import os
-from tqdm import tqdm as wassach
 from perfectswish.object_detection.detect_objects import ball_objects
 
 
@@ -44,12 +43,12 @@ def find_balls_list_and_avarage_list():
     folder = r'images_test\balls_locations_memory_test'
     images = [os.path.join(folder, file) for file in os.listdir(folder)]
     images.pop(0)
-    images_in_cv2 = [cv2.imread(image) for image in wassach(images, desc="Reading images")]
+    images_in_cv2 = [cv2.imread(image) for image in images]
     recent_balls_list = []
 
     i = 0
     id_to_ball = {}
-    for image in wassach(images_in_cv2, desc="Running the function on the images"):
+    for image in images_in_cv2:
         balls, cue_ball = ball_objects(image, blank_image)
         for ball in balls:
             ball.id = i
@@ -60,7 +59,7 @@ def find_balls_list_and_avarage_list():
     balls_list_and_avarge_list = []
 
     i = 0
-    for ball_list in wassach(recent_balls_list, desc="Running the function on the recent balls list"):
+    for ball_list in recent_balls_list:
         if i < 10:
             i += 1
             continue

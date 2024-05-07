@@ -17,7 +17,7 @@ class LiveImageDisplay:
 
     def __init__(self, main_loop, *args, framerate=FPS, window_name: str = '',
                  display_last_image: bool = False, borderless: bool = False,
-                 width=WIDTH, height=HEIGHT, display_on_second_monitor: bool = False, fullscreen=True):
+                 width=WIDTH, height=HEIGHT, display_on_second_monitor: bool = False, fullscreen=True, remember_balls_func=None):
         """
         A class which continuously displays images from a main loop.
         :param main_loop: A function which returns an image.
@@ -62,6 +62,8 @@ class LiveImageDisplay:
         else:
             self._canvas = tk.Canvas(self._root, width=self.__width, height=self.__height)
             self._canvas.pack()
+
+        self.remember_balls_func = remember_balls_func
 
     def __check_image(self, image):
         """
