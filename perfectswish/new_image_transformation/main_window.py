@@ -1,5 +1,4 @@
 import tkinter as tk
-from typing import TypeVar
 
 import cv2
 from PIL import Image
@@ -10,6 +9,7 @@ from perfectswish.new_image_transformation.image_transform_frame_decorator impor
 from perfectswish.new_image_transformation.movable_points_decorator import MovablePoints
 from perfectswish.new_image_transformation.points_frame_decorator import Points
 from perfectswish.new_image_transformation.user_action_frame import UserActionFrame
+
 
 class PerfectSwishApp(tk.Tk):
     def __init__(self):
@@ -25,28 +25,27 @@ class PerfectSwishApp(tk.Tk):
 
     def __create_frames(self):
         user_action_frame = UserActionFrame(self, self)
-        image_edit_frame = PointSelection(
-            MovablePoints(
-                Points(
-                    BaseImageFrame(user_action_frame, self, get_image),
-                )
+        # main window with control
+        image_edit_frame = ImageTransform(MovablePoints(
+            Points(
+                BaseImageFrame(user_action_frame, self, get_image),
             )
-        )
+        ))
         user_action_frame.set_frame(image_edit_frame)
         self.__frames.append(user_action_frame)
 
         self.__frames[-1].pack(fill="both", expand=True)
-        # this_screen = get_root_screen(self)
-        # other_screen = DisplayApp.get_display_screen(this_screen)
-        #
-        # self.__top_level = DisplayApp(other_screen)
-        # reacting_image = ImageTransform(
-        #     Points(
-        #         BaseImageFrame(self.__top_level, self, get_image),
-        #         __set_points=lambda: self.shared_data.get('rect', []),
-        #     )
-        # )
-        # self.__top_level.set_frame(reacting_image)
+        this_screen = get_root_screen(self)
+        other_screen = DisplayApp.get_display_screen(this_screen)
+
+        # other windows projection
+        self.__top_level = DisplayApp(other_screen)
+        reacting_image = ImageTransform(
+            Points(
+                BaseImageFrame(self.__top_level, self, get_image),
+            )
+        )
+        self.__top_level.set_frame(reacting_image)
 
 
 class DisplayApp(tk.Toplevel):
