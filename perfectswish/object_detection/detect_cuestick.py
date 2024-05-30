@@ -1,36 +1,37 @@
-import math
-
 import cv2
 from cv2 import aruco
 import numpy as np
 import matplotlib.pyplot as plt
 
-#%%
+# %%
 marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
 param_markers = aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(marker_dict, param_markers)
 
 MARKER_SIZE = 400
 
-def save_aruco_markers(n = 10, filename = "markers"):
+
+def save_aruco_markers(n=10, filename="markers"):
     # Generating Unique Markers and placing them in a plt grid
     markers = []
-    for i in range(10):
+    for i in range(n):
         markers.append(aruco.generateImageMarker(marker_dict, i, MARKER_SIZE))
 
-    fig, ax = plt.subplots(2, 5)
-    fig.suptitle("Markers")
-
-    l = [i for i in range(1, n - 1) if n / i == n // i] # overkill math
+    l = [i for i in range(1, n - 1) if n / i == n // i]  # overkill math to print the markers in a grid
     m = l[len(l) // 2]
+
+    fig, ax = plt.subplots(m, n // m)
+    fig.suptitle("Markers")
     # grayscale the plt images
     for i in range(m):
-        for j in range(n//m):
+        for j in range(n // m):
             ax[i, j].axis('off')
             ax[i, j].imshow(markers[i * 5 + j], cmap='gray')
 
     # save the figure
-    plt.savefig(filename+".png")
+    plt.savefig(filename + ".png")
+
+
 class CuestickDetector:
     def __init__(self, fiducial_to_stickend_ratio=4 / 9):
         self.marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
@@ -80,6 +81,7 @@ class CuestickDetector:
             cv2.LINE_AA,
         )
         return frame
+
 
 if __name__ == '__main__':
     cap = cv2.VideoCapture(0)
