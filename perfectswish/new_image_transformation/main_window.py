@@ -23,8 +23,14 @@ class PerfectSwishApp(tk.Tk):
         self.resizable(False, False)
         self.__create_frames()
 
+    def set_frame(self, frame_num):
+        pass
 
     def __create_frames(self):
+        user_action_frame = UserActionFrame(self, self, next_btn_action=lambda: self.set_frame(1))
+        # main window with control
+        self.__frames.append(user_action_frame)
+
         self.__frames[-1].pack(fill="both", expand=True)
         this_screen = get_root_screen(self)
         other_screen = DisplayApp.get_display_screen(this_screen)
