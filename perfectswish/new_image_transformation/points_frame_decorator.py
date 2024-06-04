@@ -31,7 +31,6 @@ class Points(FrameDecorator):
         self.__point_radius = point_radius
         self.__point_padding = point_padding
         self.__radius_tolerance = radius_tolerance
-
         if render_points:
             self._draw_after.append(self.__draw_points)
 
@@ -108,3 +107,4 @@ class Points(FrameDecorator):
                 text_x, text_y = x - 8, y - 8
 
             self._canvas.create_text(text_x, text_y, text=str(i + 1), fill='#%02x%02x%02x' % color)
+

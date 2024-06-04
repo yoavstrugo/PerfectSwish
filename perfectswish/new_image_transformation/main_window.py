@@ -23,28 +23,29 @@ class PerfectSwishApp(tk.Tk):
         self.resizable(False, False)
         self.__create_frames()
 
-    def __create_frames(self):
-        user_action_frame = UserActionFrame(self, self)
-        # main window with control
-        image_edit_frame = ImageTransform(MovablePoints(
-            Points(
-                BaseImageFrame(user_action_frame, self, get_image),
-            )
-        ))
-        user_action_frame.set_frame(image_edit_frame)
-        self.__frames.append(user_action_frame)
 
+    def __create_frames(self):
         self.__frames[-1].pack(fill="both", expand=True)
         this_screen = get_root_screen(self)
         other_screen = DisplayApp.get_display_screen(this_screen)
 
         # other windows projection
         self.__top_level = DisplayApp(other_screen)
+
         reacting_image = ImageTransform(
             Points(
-                BaseImageFrame(self.__top_level, self, get_image),
+                BaseImageFrame(self.__top_level, self, get_image, width=other_screen.width, height=other_screen.height),
             )
         )
+
+        image_edit_frame = ImageTransform(MovablePoints(
+            Points(
+                BaseImageFrame(user_action_frame, self, get_image),
+            ), edit_other_win_points=reacting_image._set_points
+        )
+        )
+        user_action_frame.set_frame(image_edit_frame)
+        self.__frames.append(user_action_frame)
         self.__top_level.set_frame(reacting_image)
 
 

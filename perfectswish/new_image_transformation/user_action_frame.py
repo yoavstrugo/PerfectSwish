@@ -2,9 +2,11 @@ import tkinter as tk
 
 
 class UserActionFrame(tk.Frame):
-    def __init__(self, master, app):
+    def __init__(self, master, app, next_btn_action=None, back_btn_action=None):
         super().__init__(master)
         self.__app = app
+        self.__next_btn_action = next_btn_action
+        self.__back_btn_action = back_btn_action
 
     def set_frame(self, frame):
         self.__subframe_obj = frame
@@ -21,8 +23,8 @@ class UserActionFrame(tk.Frame):
         bottom_area = tk.Frame(self)
         bottom_area.pack(side="bottom", fill="x", padx=10, pady=10)
 
-        back_button = tk.Button(bottom_area, text="Back", command=lambda: print('back'))
+        back_button = tk.Button(bottom_area, text="Back", command=self.__back_btn_action)
         back_button.pack(side="left")
 
-        next_button = tk.Button(bottom_area, text="Next", command=lambda: print('next'))
+        next_button = tk.Button(bottom_area, text="Next", command=self.__next_btn_action)
         next_button.pack(side="right")

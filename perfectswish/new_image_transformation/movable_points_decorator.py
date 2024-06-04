@@ -11,11 +11,12 @@ class MovablePoints(FrameDecorator):
 
     # TODO: min imaeg height width for resize
 
-    def __init__(self, frame, fine_movement: int = 1, shared_data_key: str = 'rect'):
+    def __init__(self, frame, fine_movement: int = 1, shared_data_key: str = 'rect', edit_other_win_points: Callable = None):
         super().__init__(frame)
         self.__fine_movement = fine_movement
         self.__bind_events()
         self.__shared_data_key = shared_data_key
+        self.__edit_other_win_points = edit_other_win_points
 
     def __bind_events(self):
         # Bind arrow keys to move the selected point
@@ -30,6 +31,11 @@ class MovablePoints(FrameDecorator):
     def __update_shared_data(self):
         points_in_image = [self._get_image_point(x, y) for x, y in self._points]
         self._app.shared_data[self.__shared_data_key] = points_in_image
+        if self.__edit_other_win_points:
+            self.__edit_other_win_points(points_in_image)
+
+
+
 
     def __move_selected_point(self, dx, dy):
         if self._selected_point is not None:
@@ -51,4 +57,7 @@ class MovablePoints(FrameDecorator):
             x, y = self._points[self._selected_point]
             self._points[self._selected_point] = (max(0, min(self._width, x)), max(0, min(self._height, y)))
         self.__update_shared_data()
+
+
+
 
