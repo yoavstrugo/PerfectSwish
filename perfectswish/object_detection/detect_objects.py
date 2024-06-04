@@ -233,10 +233,18 @@ def cue_object(image_with_circles: Image, original_image: Image, img_contours: I
     cue = create_cue_object(cue_contour, original_image, cue_ball.position)
     return cue, image_with_circles_and_cue
 
+def show_im(image):
+    # show an image that fits in the screen:
+    if image.shape[0] > 1000 or image.shape[1] > 1000:
+        image = cv2.resize(image, (int(image.shape[1] / 2), int(image.shape[0] / 2)))
+    cv2.imshow("image", image)
+    cv2.waitKey(0)
+
 
 def find_contours(balls_image: Image, original_image: Image):
-    subtracted_image = subtract_images(original_image, balls_image)
-    rgb = cv2.cvtColor(subtracted_image, cv2.COLOR_BGR2RGB)
+    # subtracted_image = subtract_images(original_image, balls_image)
+    # rgb = cv2.cvtColor(subtracted_image, cv2.COLOR_BGR2RGB)
+    rgb = cv2.cvtColor(balls_image, cv2.COLOR_BGR2RGB)
     bilateral_color = cv2.bilateralFilter(rgb, 9, 100, 20)
     mask_image = take_threshold(bilateral_color, 60, balls_image)
     erisioned_dilated_image = erision_dilation(mask_image, 3, 3)
@@ -265,9 +273,9 @@ def find_objects(balls_image: Image, original_image: Image, TEST=False):
     cue, image_with_circles_and_cue = cue_object(image_with_circles, original_image, img_contours_for_cue, contours,
                                                  cue_ball)
 
-    cv2.waitKey(0)
     if TEST:
-        return image_with_circles_and_cue
+        cv2.imshow("image with circles and cue", image_with_circles_and_cue)
+        cv2.waitKey(0)
     return balls, cue_ball, cue
 
 
@@ -290,5 +298,5 @@ def return_gradient_by_color(balls_image):
 if __name__ == '__main__':
     # Made a new branch! :)
     board_image = cv2.imread(r"detect_objects_test_images\blank.jpg")
-    balls_image = cv2.imread(r"detect_objects_test_images\triangle_without_triangle.jpg")
-    find_objects(balls_image, board_image)
+    balls_image = cv2.imread(r"detect_objects_test_images\cue_six_balls_and_free.jpg")
+    find_objects(balls_image, board_image, TEST=True)
