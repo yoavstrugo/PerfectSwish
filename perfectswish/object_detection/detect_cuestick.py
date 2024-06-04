@@ -33,11 +33,13 @@ def save_aruco_markers(n=10, filename="markers"):
 
 
 class CuestickDetector:
-    def __init__(self, fiducial_to_stickend_ratio=4 / 9):
+    def __init__(self, fiducial_to_stickend_ratio=4 / 9, back_fiducial_id=8, front_fiducial_id=9):
         self.marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
         self.param_markers = aruco.DetectorParameters()
         self.detector = cv2.aruco.ArucoDetector(self.marker_dict, self.param_markers)
         self.fiducial_to_stickend_ratio = fiducial_to_stickend_ratio
+        self.back_fiducial_id = back_fiducial_id
+        self.front_fiducial_id = front_fiducial_id
 
     def detect_cuestick(self, frame):
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -48,9 +50,9 @@ class CuestickDetector:
             for ids, corners in zip(marker_IDs, marker_corners):
                 corners = corners.reshape(4, 2)
                 corners = corners.astype(int)
-                if ids[0] == 8:
+                if ids[0] == self.back_fiducial_id:
                     back_fiducial_center = np.mean(corners, axis=0)
-                elif ids[0] == 9:
+                elif ids[0] == self.front_fiducial_id:
                     front_fiducial_center = np.mean(corners, axis=0)
             if back_fiducial_center is not None and front_fiducial_center is not None:
                 stickend = back_fiducial_center * (
@@ -85,7 +87,7 @@ class CuestickDetector:
 
 if __name__ == '__main__':
     cap = cv2.VideoCapture(0)
-    detector = CuestickDetector()
+    detector = CuestickDetector(back_fiducial_id=8, front_fiducial_id=9)
     while True:
         ret, frame = cap.read()
         if not ret:
