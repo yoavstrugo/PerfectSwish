@@ -43,4 +43,4 @@ def get_webcam_image(cap: cv2.VideoCapture) -> np.array:
     if not ret:
         raise IOError("Error reading from camera")
 
-    return frame
+    return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

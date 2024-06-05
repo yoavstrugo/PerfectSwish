@@ -28,6 +28,7 @@ class BaseImageFrame(tk.Frame):
 
         self._draw_before = []
         self._draw_after = []
+        self._update = []
 
         self.__fps = fps
 
@@ -48,6 +49,8 @@ class BaseImageFrame(tk.Frame):
         if self.show:
             self.__draw()
         self.after(1000 // self.__fps, self.__update)
+        for to_update in self._update:
+            to_update()
 
     def __resize_image(self, image):
         """

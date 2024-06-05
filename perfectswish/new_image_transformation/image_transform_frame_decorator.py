@@ -22,7 +22,7 @@ class ImageTransform(FrameDecorator):
 
         # some check
         if self._points and (len(self._points) != 4):
-            raise ValueError("The frame must have exactly 4 points to transform the image.")
+            self._points = self.__get_image_corners()
 
         if reference_points is None:
             self.__reference_points = self.__get_image_corners()

@@ -1,3 +1,5 @@
+from typing import Callable
+
 import cv2
 import numpy as np
 
@@ -16,10 +18,12 @@ class Points(FrameDecorator):
     def __init__(self, frame, initial_points: list = None, render_points: bool = True,
                  radius_tolerance: int = 10, point_color: (int, int, int) = (0, 0, 255),
                  selected_point_color: (int, int, int) = (0, 255, 0),
-                 point_radius: int = 3, point_padding: int = 2, **kwargs):
+                 point_radius: int = 3, point_padding: int = 2, pass_points: list[Callable] = None, **kwargs):
         # Initiate the points
         super().__init__(frame, **kwargs)
         self._set_points(initial_points or [])
+
+        self._pass_points = pass_points or []
 
         self._transform_point: TransformationPipline[(int, int)] = TransformationPipline()
         self._selected_point = None
@@ -74,7 +78,10 @@ class Points(FrameDecorator):
         return x * scale_x, y * scale_y
 
     def __draw_points(self):
-        self._update_attributes()
+        for pass_points_func in self._pass_points:
+            image_points = [self._get_image_point(x, y) for x, y in self._points]
+            pass_points_func(image_points)
+
         # draw the points through tkinter
         for i, (x, y) in enumerate(self._points):
             if i == self._selected_point:
