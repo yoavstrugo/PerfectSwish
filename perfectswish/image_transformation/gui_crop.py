@@ -72,6 +72,11 @@ if __name__ == '__main__':
     path = r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\image_transformation\images\blank_board.jpg"
     image = cv2.imread(path)
 
+    video_path = r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\object_detection\detect_objects_test_images\full_balls_no_green.mp4"
+    cap = cv2.VideoCapture(video_path)
+    ret, frame = cap.read()
+    image = frame
+
     def get_rect(rect):
         print(rect)
 
