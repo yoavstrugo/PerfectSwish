@@ -8,6 +8,9 @@ class UserActionFrame(tk.Frame):
         self.__next_btn_action = next_btn_action
         self.__back_btn_action = back_btn_action
 
+    def show(self, show: bool):
+        self.__subframe_obj.switch_show(show)
+
     def set_frame(self, frame):
         self.__subframe_obj = frame
         self.__subframe_obj.pack_forget()

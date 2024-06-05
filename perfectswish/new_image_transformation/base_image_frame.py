@@ -21,7 +21,7 @@ class BaseImageFrame(tk.Frame):
         self._app = app
         self._master = master
         self._get_image = get_image
-
+        self.show = False
         self._width = width
         self._height = height
         self._img_orig_height, self._img_orig_width, _ = self._get_image().shape
@@ -37,12 +37,16 @@ class BaseImageFrame(tk.Frame):
         self.__bind_events()
         self.after(100, self.__update)
 
+    def switch_show(self, show: bool):
+        self.show = show
+
     def __bind_events(self):
         # Bind window resize
         self.bind("<Configure>", self.__on_resize)
 
     def __update(self):
-        self.__draw()
+        if self.show:
+            self.__draw()
         self.after(1000 // self.__fps, self.__update)
 
     def __resize_image(self, image):
