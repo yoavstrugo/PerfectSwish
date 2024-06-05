@@ -28,7 +28,7 @@ def transform_board(image, rect):
 def draw_circles(image, circles):
     if circles is not None:
         for i in circles:
-            print(i)
+            # print(i)
             cv2.circle(image, (int(i[0]), int(i[1])), 20, (0, 255, 0), 3)
     return image
 
