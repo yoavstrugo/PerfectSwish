@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def get_rect(image, AdjustmentApp, initial_rect=None):
     if initial_rect is None:
         initial_rect = [int(0.4 * x) for x in
