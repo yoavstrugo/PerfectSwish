@@ -9,6 +9,7 @@ from perfectswish.new_image_transformation.image_transform_frame_decorator impor
 from perfectswish.new_image_transformation.movable_points_decorator import MovablePoints
 from perfectswish.new_image_transformation.points_frame_decorator import Points
 from perfectswish.new_image_transformation.user_action_frame import UserActionFrame
+from perfectswish.new_image_transformation.point_selection_frame_decorator import PointSelection
 
 CAMERA = 0
 
@@ -54,12 +55,12 @@ class PerfectSwishApp(tk.Tk):
     def __create_frames(self):
         camera_image_bgr = self.get_camera_image()
         camrea_image = lambda: cv2.cvtColor(camera_image_bgr, cv2.COLOR_BGR2RGB)
-        chess_image = lambda: cv2.imread("chess.jpeg")
         first_frame = UserActionFrame(self, self, next_btn_action=lambda: self.set_frame(1), back_btn_action=None)
-        image_frame1 = ImageTransform(MovablePoints(
+        image_frame1 = PointSelection(MovablePoints(
             Points(
                 BaseImageFrame(first_frame, self, camrea_image),
-            )
+            ),
+            shared_data_key='screen_1'
         )
         )
         first_frame.set_frame(image_frame1)
@@ -67,6 +68,7 @@ class PerfectSwishApp(tk.Tk):
 
         this_screen = get_root_screen(self)
         other_screen = DisplayApp.get_display_screen(this_screen)
+
         # frame 2
         frame2 = UserActionFrame(self, self, next_btn_action=lambda: self.set_frame(2),
                                               back_btn_action=lambda: self.set_frame(1))
@@ -89,14 +91,23 @@ class PerfectSwishApp(tk.Tk):
 
 
         # frame 3
+
         frame3 = UserActionFrame(self, self, next_btn_action=None,
                                               back_btn_action=lambda: self.set_frame(2))
-        image_frame3 = ImageTransform(Points(BaseImageFrame(frame3, self, camrea_image)))
+        image_frame3 = ImageTransform(
+            Points(
+                BaseImageFrame(frame3, self, camrea_image),
+                initial_points=[(0,0), (800, 0), (800, 450), (0, 450)]
+            )
+
+        )
+        image_frame1.set_points_computer_frame_3 = image_frame3._set_reference_points
         toplevel3 = DisplayApp(other_screen)
-        image_frame3_projection = ImageTransform(Points(BaseImageFrame(toplevel3, self, camrea_image, width=other_screen.width, height=other_screen.height)))
+        image_frame3_projection = ImageTransform(Points(BaseImageFrame(toplevel3, self, self.get_camera_image, width=other_screen.width, height=other_screen.height)))
         toplevel3.set_frame(image_frame3_projection)
         frame3.set_frame(image_frame3)
         self.__frames.append((frame3, toplevel3))
+
 
 
 

@@ -77,3 +77,9 @@ class ImageTransform(FrameDecorator):
         # Transform the point
         x, y = cv2.perspectiveTransform(np.array([[[x, y]]], dtype=np.float32), transformation_matrix)[0][0]
         return x, y
+
+    def _set_reference_points(self, points: list):
+        """
+        This function will set the reference points for the transformation.
+        """
+        self.__reference_points = points

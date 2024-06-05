@@ -11,7 +11,7 @@ class MovablePoints(FrameDecorator):
 
     # TODO: min imaeg height width for resize
 
-    def __init__(self, frame, fine_movement: int = 1, shared_data_key: str = 'rect', edit_other_win_points: Callable = None):
+    def __init__(self, frame, fine_movement: int = 1, shared_data_key: str = 'screen_2', edit_other_win_points: Callable = None):
         super().__init__(frame)
         self.__fine_movement = fine_movement
         self.__bind_events()
@@ -57,6 +57,7 @@ class MovablePoints(FrameDecorator):
             x, y = self._points[self._selected_point]
             self._points[self._selected_point] = (max(0, min(self._width, x)), max(0, min(self._height, y)))
         self.__update_shared_data()
+
 
 
 
