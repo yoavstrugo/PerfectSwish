@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 from screeninfo import Monitor
 
-from perfectswish.api.utils import Colors
-from perfectswish.api.webcam import WebcamCapture
+from perfectswish.utils.utils import Colors
+from perfectswish.utils.webcam import WebcamCapture
 from perfectswish.image_transformation.image_processing import Board, transform_board
 from perfectswish.new_image_transformation.base_image_frame import BaseImageFrame
 from perfectswish.new_image_transformation.display_app import DisplayApp

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from perfectswish.api.utils import Color, Colors
+from perfectswish.utils.utils import Color, Colors
 import uuid
 
 @dataclass

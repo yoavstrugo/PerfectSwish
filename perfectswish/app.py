@@ -1,10 +1,10 @@
 import tkinter as tk
 
-from perfectswish.api import data_io, webcam
-from perfectswish.api.monitor_utils import get_other_screen, get_root_screen
+from perfectswish.utils import data_io, webcam
+from perfectswish.utils.monitor_utils import get_other_screen, get_root_screen
 from perfectswish.phases.crop_phase import CropPhase
 from perfectswish.phases.game_phase import GamePhase
-from perfectswish.phases import ProjectAlignPhase
+from perfectswish.phases.projection_align_phase import ProjectAlignPhase
 
 DATA_FILE = 'app_data.dat'
 CAMERA = 0

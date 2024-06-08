@@ -1,7 +1,7 @@
 from typing import Callable
 
 from perfectswish.new_image_transformation.frame_decorator import FrameDecorator
-from perfectswish.api.trasnformation_pipeline import TransformationPipline
+from perfectswish.utils.trasnformation_pipeline import TransformationPipline
 
 
 class Points(FrameDecorator):

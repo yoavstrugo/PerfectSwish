@@ -1,6 +1,6 @@
 from screeninfo import Monitor
 
-from perfectswish.api.webcam import WebcamCapture
+from perfectswish.utils.webcam import WebcamCapture
 from perfectswish.new_image_transformation.base_image_frame import BaseImageFrame
 from perfectswish.new_image_transformation.display_app import DisplayApp
 from perfectswish.new_image_transformation.image_transform_frame_decorator import ImageTransform

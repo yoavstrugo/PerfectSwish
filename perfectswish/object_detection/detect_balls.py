@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from perfectswish.api.frame_buffer import FrameBuffer
-from perfectswish.api.utils import Colors, show_im
+from perfectswish.utils.frame_buffer import FrameBuffer
+from perfectswish.utils.utils import Colors, show_im
 from perfectswish.image_transformation.image_processing import transform_board
 def draw_circles(image, circles):
     if circles is not None:

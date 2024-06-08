@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 
-from perfectswish.api.trasnformation_pipeline import TransformationPipline
+from perfectswish.utils.trasnformation_pipeline import TransformationPipline
 
 
 class BaseImageFrame(tk.Frame):

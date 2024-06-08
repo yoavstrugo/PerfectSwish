@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-from perfectswish.api.utils import Color, Colors
-from perfectswish.api.common_objects import Ball, Board, VelocityVector
+from perfectswish.utils.utils import Color, Colors
+from perfectswish.utils.common_objects import Ball, Board, VelocityVector
 
 
 def visualize_pool_board(board: Board, path: list[np.array] = None,
