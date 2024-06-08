@@ -1,21 +1,23 @@
+import tkinter as tk
 from typing import List
 
 import cv2
 import numpy as np
-import tkinter as tk
+from perfectswish.object_detection.balls_locations_memory import get_avarage_balls_list
+from perfectswish.object_detection.detect_objects import find_objects
 
 from image_transformation.image_processing import find_board, generate_projection, transform_board
 from perfectswish.api import webcam
-from perfectswish.api.common_objects import VelocityVector, Ball
+from perfectswish.api.common_objects import Ball, Board, VelocityVector
 from perfectswish.api.data_io import load_data, save_data
 from perfectswish.gui.live_image_display import LiveImageDisplay
 from perfectswish.gui.take_image_gui import take_image
 from perfectswish.image_transformation.gui_crop import get_camera_rect
 from perfectswish.image_transformation.gui_projection import get_projection_rect
-from perfectswish.object_detection.balls_locations_memory import get_avarage_balls_list
-from perfectswish.object_detection.detect_objects import find_objects
+from perfectswish.object_detection.detect_balls import draw_circles, find_balls
+from perfectswish.object_detection.detect_cuestick import CuestickDetector
 from perfectswish.simulation import simulate
-from perfectswish.visualization.visualize import visualize_pool_board
+from perfectswish.visualization.visualize import draw_board, visualize_pool_board
 
 DATA_DIRECTORY = "data"
 
@@ -79,32 +81,25 @@ def setup_rects(cap: cv2.VideoCapture) -> tuple:
     return camera_rect, projector_rect
 
 
-def main_loop(cap: cv2.VideoCapture, camera_rect: list, projector_rect: list, empty_image_transformed: np.array,
-              remember_balls_func: callable) -> (
-        np.array):
-    webcam_image = get_board_image(cap)
+cap = webcam.initialize_webcam(1)
+cuestick_detector = CuestickDetector()
 
-    transformed_webcam_image = transform_board(webcam_image, camera_rect)
-    balls_in, cue_ball, cue = find_objects(transformed_webcam_image, empty_image_transformed)
-    board = find_board()
+RESOLUTION_FACTOR = 8
 
-    balls = remember_balls_func(balls_in, remember_balls_func)
 
-    if not all([cue_ball, cue, balls]):
-        return None
 
-    cue_ball.direction = cue.direction
-    path, hit = simulate.generate_path(white_ball=cue_ball, balls=balls, board=board, max_len=10)
-
-    direction_vectors = [
-        VelocityVector(hit.white_ball_pos, hit.white_ball_hit_vec),
-        VelocityVector(hit.hit_point, hit.ball_hit_vec),
-    ]
-
-    visualized_image = visualize_pool_board(board, path=path, direction_vectors=direction_vectors, balls=balls)
-
-    projection = generate_projection(visualized_image, projector_rect)
-    return projection
+    # path, hit = simulate.generate_path(white_ball=cue_ball, balls=balls, board=board, max_len=10)
+    #
+    # direction_vectors = [
+    #     VelocityVector(hit.white_ball_pos, hit.white_ball_hit_vec),
+    #     VelocityVector(hit.hit_point, hit.ball_hit_vec),
+    # ]
+    #
+    # visualized_image = visualize_pool_board(board, path=path, direction_vectors=direction_vectors,
+    #                                         balls=balls)
+    #
+    # projection = generate_projection(visualized_image, projector_rect)
+    # return board_im
 
 
 def create_controls(root, return_values, cap):
@@ -143,12 +138,14 @@ def main():
         return
 
     balls_list = []
+
     def add_to_balls_list(balls):
         nonlocal balls_list
         balls_list = remember_balls(balls, balls_list)
         return balls_list
 
-    liveImageDisplay = LiveImageDisplay(main_loop, cap, camera_rect, projector_rect, empty_image_transformed, add_to_balls_list,
+    liveImageDisplay = LiveImageDisplay(main_loop, cap, camera_rect, projector_rect, empty_image_transformed,
+                                        add_to_balls_list,
                                         window_name="Perfect Swish", framerate=30, display_last_image=True,
                                         borderless=True,
                                         height=1080, width=1920, display_on_second_monitor=True)

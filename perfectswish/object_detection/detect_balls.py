@@ -3,28 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from perfectswish.api.frame_buffer import FrameBuffer
 from perfectswish.api.utils import Colors, show_im
-
-def transform_board(image, rect):
-    # Get the coordinates of the corners of the board
-    x1, y1, x2, y2, x3, y3, x4, y4 = rect
-
-    # Set the target size for the new image
-    RESOLUTION_FACTOR = 8
-    target_width = 112 * RESOLUTION_FACTOR
-    target_height = 224 * RESOLUTION_FACTOR
-
-    # Define the new coordinates of the corners in the new image
-    new_rect = np.array([[0, 0], [target_width, 0], [target_width, target_height], [0, target_height]],
-                        dtype=np.float32)
-
-    # Calculate the perspective transformation matrix
-    matrix = cv2.getPerspectiveTransform(np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]], dtype=np.float32), new_rect)
-
-    # Apply the perspective transformation to the original image
-    transformed_image = cv2.warpPerspective(image, matrix, (target_width, target_height))
-
-    return transformed_image
-
+from perfectswish.image_transformation.image_processing import transform_board
 def draw_circles(image, circles):
     if circles is not None:
         for i in circles:
