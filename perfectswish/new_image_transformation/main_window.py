@@ -1,21 +1,38 @@
 import tkinter as tk
 
 import cv2
+import numpy as np
 from PIL import Image
 from screeninfo import Monitor, get_monitors
 
 from perfectswish.api import webcam
+from perfectswish.image_transformation.image_processing import Board, transform_board
 from perfectswish.new_image_transformation.base_image_frame import BaseImageFrame
 from perfectswish.new_image_transformation.image_transform_frame_decorator import ImageTransform
 from perfectswish.new_image_transformation.movable_points_decorator import MovablePoints
 from perfectswish.new_image_transformation.point_selection_frame_decorator import PointSelection
 from perfectswish.new_image_transformation.points_frame_decorator import Points
 from perfectswish.new_image_transformation.user_action_frame import UserActionFrame
+from perfectswish.object_detection.detect_balls import draw_circles, find_balls
+from perfectswish.object_detection.detect_cuestick import CuestickDetector
+from perfectswish.visualization.visualize import draw_board
 
 CAMERA = 1
 
 
 cap = webcam.initialize_webcam(CAMERA)
+cuestick_detector = CuestickDetector()
+RESOLUTION_FACTOR = 8
+
+class SharedDataEntry:
+    def __init__(self, data):
+        self.data = data
+
+    def set(self, data):
+        self.data = data
+
+    def get(self):
+        return self.data
 
 class PerfectSwishApp(tk.Tk):
     def __init__(self):
@@ -26,6 +43,7 @@ class PerfectSwishApp(tk.Tk):
         self.__frames: list[tuple[tk.Frame, tk.Toplevel | None]] = []
         self.shared_data = dict()
 
+        self.crop_rect = None
         self.resizable(False, False)
         self.__create_frames()
         self.set_frame(0)
@@ -47,6 +65,30 @@ class PerfectSwishApp(tk.Tk):
             self.__frames[frame_num][1].show(True)
 
 
+    def set_crop_rect(self, pts):
+        self.crop_rect = pts
+
+    def main_loop(self) -> (
+            np.array):
+        webcam_image = webcam.get_webcam_image(cap)
+        if not self.crop_rect:
+            return webcam_image
+        cropped_board = transform_board(webcam_image, self.crop_rect)
+        cv2.imwrite("board_cropped.png", cropped_board)
+
+        balls = find_balls(cropped_board)
+        cue = cuestick_detector.detect_cuestick(cropped_board)
+
+        board_im = draw_board(Board(112 * RESOLUTION_FACTOR, 224 * RESOLUTION_FACTOR))
+        if balls is not None:
+            draw_circles(board_im, balls)
+
+        if cue is not None:
+            stickend, back_fiducial_center, front_fiducial_center = cue
+            cuestick_detector.draw_cuestick(board_im, stickend, back_fiducial_center, front_fiducial_center)
+
+        return board_im
+
 
     def __create_frames(self):
         first_frame = UserActionFrame(self, self, next_btn_action=lambda: self.set_frame(1),
@@ -56,6 +98,7 @@ class PerfectSwishApp(tk.Tk):
                 BaseImageFrame(first_frame, self, lambda: webcam.get_webcam_image(cap)),
             ),
         )
+        image_frame1._pass_points.append(self.set_crop_rect)
         first_frame.set_frame(image_frame1)
         self.__frames.append((first_frame, None))
 
@@ -90,13 +133,13 @@ class PerfectSwishApp(tk.Tk):
                                  back_btn_action=lambda: self.set_frame(2))
         image_frame3 = ImageTransform(
             Points(
-                BaseImageFrame(frame3, self, lambda: webcam.get_webcam_image(cap))
+                BaseImageFrame(frame3, self, lambda: webcam.get_webcam_image(cap)),
             )
 
         )
         toplevel3 = DisplayApp(other_screen)
         image_frame3_projection = ImageTransform(Points(
-            BaseImageFrame(toplevel3, self, lambda: webcam.get_webcam_image(cap), width=other_screen.width,
+            BaseImageFrame(toplevel3, self, self.main_loop, width=other_screen.width,
                            height=other_screen.height)))
         toplevel3.set_frame(image_frame3_projection)
         frame3.set_frame(image_frame3)
