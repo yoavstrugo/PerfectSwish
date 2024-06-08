@@ -15,3 +15,4 @@ class FrameDecorator:
     def __getattr__(self, item):
         # If the attribute is not found in the decorator, look for it in the frame
         return getattr(self._frame, item)
+

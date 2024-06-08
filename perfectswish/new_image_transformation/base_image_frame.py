@@ -1,11 +1,11 @@
 import tkinter as tk
-from typing import Callable, final
+from typing import Callable
 
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
 
-from perfectswish.new_image_transformation.trasnformation_pipeline import TransformationPipline
+from perfectswish.api.trasnformation_pipeline import TransformationPipline
 
 
 class BaseImageFrame(tk.Frame):
@@ -16,12 +16,12 @@ class BaseImageFrame(tk.Frame):
 
     # TODO: min imaeg height width for resize
 
-    def __init__(self, master, app, get_image: Callable, fps: int = 24, width: int = 800, height: int = 450):
+    def __init__(self, master, app, get_image: Callable, fps: int = 24, width: int = 800, height: int =
+    450):
         super().__init__(master)
         self._app = app
         self._master = master
         self._get_image = get_image
-        self.show = False
         self._width = width
         self._height = height
         self._img_orig_height, self._img_orig_width, _ = self._get_image().shape
@@ -36,21 +36,27 @@ class BaseImageFrame(tk.Frame):
 
         self.__create_widgets()
         self.__bind_events()
-        self.after(100, self.__update)
+        self.__after_id = self.after(100, self.__update)
+        self.__destroyed = False
 
-    def switch_show(self, show: bool):
-        self.show = show
+    def destroy(self):
+        self.after_cancel(self.__after_id)
+        self.__destroyed = True
+
 
     def __bind_events(self):
         # Bind window resize
         self.bind("<Configure>", self.__on_resize)
 
     def __update(self):
-        if self.show:
-            self.__draw()
-        self.after(1000 // self.__fps, self.__update)
+        self.__draw()
         for to_update in self._update:
             to_update()
+
+        if not self.__destroyed:
+            self.__after_id = self.after(1000 // self.__fps, self.__update)
+
+
 
     def __resize_image(self, image):
         """

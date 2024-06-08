@@ -1,10 +1,7 @@
 from typing import Callable
 
-import cv2
-import numpy as np
-
 from perfectswish.new_image_transformation.frame_decorator import FrameDecorator
-from perfectswish.new_image_transformation.trasnformation_pipeline import TransformationPipline
+from perfectswish.api.trasnformation_pipeline import TransformationPipline
 
 
 class Points(FrameDecorator):

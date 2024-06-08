@@ -26,9 +26,11 @@ class ImageTransform(FrameDecorator):
 
         if reference_points is None:
             self.__reference_points = self.__get_image_corners()
+        else:
+            self.__reference_points = reference_points
 
-            if not self._points:
-                self._set_points(self.__reference_points.copy())
+        if not self._points:
+            self._set_points(self.__reference_points.copy())
 
 
 
