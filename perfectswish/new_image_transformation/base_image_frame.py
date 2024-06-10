@@ -29,6 +29,7 @@ class BaseImageFrame(tk.Frame):
         self._draw_before = []
         self._draw_after = []
         self._update = []
+        self.__image_id = None
 
         self.__fps = fps
 
@@ -62,7 +63,7 @@ class BaseImageFrame(tk.Frame):
         """
         This function will resize the image to fit the canvas.
         """
-        return cv2.resize(image, (self._width, self._height))
+        return cv2.resize(image, (self._width, self._height), interpolation=cv2.INTER_LINEAR)
 
     def __draw(self):
         """
@@ -77,7 +78,8 @@ class BaseImageFrame(tk.Frame):
         pil_image = Image.fromarray(transformed_image)
         tk_image = ImageTk.PhotoImage(pil_image)
         self._canvas.image = tk_image
-        self._canvas.create_image(0, 0, image=self._canvas.image, anchor="nw")
+
+        self.__image_id = self._canvas.create_image(0, 0, image=self._canvas.image, anchor="nw")
 
         for draw in self._draw_after:
             draw()
