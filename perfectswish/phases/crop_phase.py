@@ -1,3 +1,5 @@
+from typing import Callable
+
 from perfectswish.utils.webcam import WebcamCapture
 from perfectswish.new_image_transformation.base_image_frame import BaseImageFrame
 from perfectswish.new_image_transformation.movable_points_decorator import MovablePoints
@@ -8,7 +10,19 @@ from perfectswish.new_image_transformation.user_action_frame import UserActionFr
 
 
 class CropPhase(Phase):
-    def __init__(self, app: "PerfectSwishApp", saved_data, next_func, back_func, cap: WebcamCapture):
+    """
+    The crop phase. This will allow the user to crop the image.
+    """
+    def __init__(self, app: "PerfectSwishApp", saved_data, next_func: Callable, back_func: Callable,
+                 cap: WebcamCapture):
+        """
+        Initializes the crop phase.
+        :param app: the main app.
+        :param saved_data: the saved data to load.
+        :param next_func: the next function.
+        :param back_func: the back function.
+        :param cap:
+        """
         super().__init__("crop")
         self._frame = UserActionFrame(app, app, next_btn_action=next_func, back_btn_action=back_func)
 
@@ -20,7 +34,8 @@ class CropPhase(Phase):
             PointSelection(
                 Points(
                     BaseImageFrame(self._frame, app, cap.get_latest_image),
-                    initial_points=self.crop_rect
+                    initial_points=self.crop_rect,
+                    connected_points=True,
                 )
             )
         )
