@@ -90,7 +90,7 @@ def draw_intermediate_images(bilat_, canny_, image, no_green_):
 
 if __name__ == '__main__':
 
-    from perfectswish.api import webcam
+    from perfectswish.utils import webcam
 
     cap = webcam.initialize_webcam(1)
 
