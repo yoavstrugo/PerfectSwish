@@ -57,22 +57,28 @@ class Points(FrameDecorator):
     def __on_mouse_press(self, event):
         self.__select_point(event.x, event.y)
 
+    @staticmethod
+    def convert_point_coords(x, y, src_coords, dst_coords) -> tuple:
+        """
+        Convert point x,y from a source coords to destination coords (proportionally, if point was sampled
+        in context of 1920x1080, and you want to convert it to 1280x720, you should pass the source coords as
+        (1920, 1080) and the destination coords as (1280, 720))
+        """
+        scale_x = dst_coords[0] / src_coords[0]
+        scale_y = dst_coords[1] / src_coords[1]
+        return x * scale_x, y * scale_y
+
     def _get_canvas_point(self, x, y):
         """
         This function will return the canvas point from the image point.
         """
-        scale_x = self._width / self._img_orig_width
-        scale_y = self._height / self._img_orig_height
-
-        return int(x * scale_x), int(y * scale_y)
+        return self.convert_point_coords(x, y, (self._img_orig_width, self._img_orig_height), (self._width, self._height))
 
     def _get_image_point(self, x, y):
         """
         This function will return the image point from the canvas point.
         """
-        scale_x = self._img_orig_width / self._width
-        scale_y = self._img_orig_height / self._height
-        return x * scale_x, y * scale_y
+        return self.convert_point_coords(x, y, (self._width, self._height), (self._img_orig_width, self._img_orig_height))
 
     def __draw_points(self):
         for pass_points_func in self._pass_points:
