@@ -9,14 +9,15 @@ class MovablePoints(FrameDecorator):
     movable, both with the mouse and with the keyboard.
     """
 
-    # TODO: min imaeg height width for resize
-
-    def __init__(self, frame, fine_movement: int = 1, shared_data_key: str = 'screen_2', edit_other_win_points: Callable = None):
+    def __init__(self, frame, fine_movement: int = 1):
+        """
+        Initializes the MovablePoints frame.
+        :param frame: The frame to decorate.
+        :param fine_movement: How much pixels to move the selected point when using the arrow keys.
+        """
         super().__init__(frame)
         self.__fine_movement = fine_movement
         self.__bind_events()
-        self.__shared_data_key = shared_data_key
-        self.__edit_other_win_points = edit_other_win_points
 
     def __bind_events(self):
         # Bind arrow keys to move the selected point
@@ -28,16 +29,11 @@ class MovablePoints(FrameDecorator):
         # Bind drag and drop
         self._canvas.bind("<B1-Motion>", self.__on_drag, add=True)
 
-    def __update_shared_data(self):
-        points_in_image = [self._get_image_point(x, y) for x, y in self._points]
-        self._app.shared_data[self.__shared_data_key] = points_in_image
-        if self.__edit_other_win_points:
-            self.__edit_other_win_points(points_in_image)
-
-
-
-
-    def __move_selected_point(self, dx, dy):
+    def __move_selected_point(self, dx, dy) -> None:
+        """
+        Handles the fine movement of the selected point.
+        :return:
+        """
         if self._selected_point is not None:
             x, y = self._points[self._selected_point]
             x += dx * self.__fine_movement
@@ -47,16 +43,17 @@ class MovablePoints(FrameDecorator):
             # bound the points to the canvas
             x, y = self._points[self._selected_point]
             self._points[self._selected_point] = (max(0, min(self._width, x)), max(0, min(self._height, y)))
-        self.__update_shared_data()
 
-    def __on_drag(self, event):
+    def __on_drag(self, event) -> None:
+        """
+        Handles the dragging of the selected point.
+        """
         if self._selected_point is not None:
             self._points[self._selected_point] = (event.x, event.y)
 
             # bound the points to the canvas
             x, y = self._points[self._selected_point]
             self._points[self._selected_point] = (max(0, min(self._width, x)), max(0, min(self._height, y)))
-        self.__update_shared_data()
 
 
 
