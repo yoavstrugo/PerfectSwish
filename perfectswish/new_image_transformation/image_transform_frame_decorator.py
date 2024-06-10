@@ -22,7 +22,7 @@ class ImageTransform(FrameDecorator):
 
         # some check
         if self._points and (len(self._points) != 4):
-            self._points = self.__get_image_corners()
+            self._points = self._set_points(self.__get_image_corners())
 
         if reference_points is None:
             self.__reference_points = self.__get_image_corners()
@@ -31,8 +31,6 @@ class ImageTransform(FrameDecorator):
 
         if not self._points:
             self._set_points(self.__reference_points.copy())
-
-
 
         # TODO: solve this better, this is bad practice
         frame._transform_image.compose(self.__transform_image)
@@ -50,14 +48,13 @@ class ImageTransform(FrameDecorator):
         ])
         return arr
 
-
-
     def __get_transformation_matrix(self):
         """
         This function will return the transformation matrix from the reference points to the points.
         """
-        target_points = [self._get_image_point(x, y) for x, y in self._points]
+        target_points = self._points
         reference_points = np.array(self.__reference_points, dtype=np.float32)
+
         target_points = np.array(target_points, dtype=np.float32)
         return cv2.getPerspectiveTransform(reference_points, target_points)
 
@@ -68,9 +65,9 @@ class ImageTransform(FrameDecorator):
         # Get the transformation matrix
         transformation_matrix = self.__get_transformation_matrix()
         # Transform the image
-        return cv2.warpPerspective(image, transformation_matrix, image.shape[:2][::-1])
+        return cv2.warpPerspective(image, transformation_matrix, (self._width, self._height))
 
-    def __transform_point(self, x, y) -> (int, int):
+    def __transform_point(self, x: int, y: int) -> (int, int):
         """
         This function will transform the point to the new perspective.
         """
