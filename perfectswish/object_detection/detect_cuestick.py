@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # %%
-marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
+OFFSET = 3
+marker_dict = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
 param_markers = aruco.DetectorParameters()
 detector = cv2.aruco.ArucoDetector(marker_dict, param_markers)
 
@@ -14,8 +15,9 @@ MARKER_SIZE = 400
 def save_aruco_markers(n=10, filename="markers"):
     # Generating Unique Markers and placing them in a plt grid
     markers = []
-    for i in range(n):
+    for i in range(n+OFFSET):
         markers.append(aruco.generateImageMarker(marker_dict, i, MARKER_SIZE))
+    markers = markers[OFFSET:]
 
     l = [i for i in range(1, n - 1) if n / i == n // i]  # overkill math to print the markers in a grid
     m = l[len(l) // 2]
@@ -23,10 +25,11 @@ def save_aruco_markers(n=10, filename="markers"):
     fig, ax = plt.subplots(m, n // m)
     fig.suptitle("Markers")
     # grayscale the plt images
+
     for i in range(m):
         for j in range(n // m):
             ax[i, j].axis('off')
-            ax[i, j].imshow(markers[i * 5 + j], cmap='gray')
+            ax[i, j].imshow(markers[i * m + j], cmap='gray')
 
     # save the figure
     plt.savefig(filename + ".png")
@@ -34,7 +37,7 @@ def save_aruco_markers(n=10, filename="markers"):
 
 class CuestickDetector:
     def __init__(self, fiducial_to_stickend_ratio=4 / 9, back_fiducial_id=8, front_fiducial_id=9):
-        self.marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
+        self.marker_dict = marker_dict
         self.param_markers = aruco.DetectorParameters()
         self.detector = cv2.aruco.ArucoDetector(self.marker_dict, self.param_markers)
         self.fiducial_to_stickend_ratio = fiducial_to_stickend_ratio
@@ -87,7 +90,7 @@ class CuestickDetector:
 
 if __name__ == '__main__':
     cap = cv2.VideoCapture(0)
-    detector = CuestickDetector(back_fiducial_id=8, front_fiducial_id=9)
+    detector = CuestickDetector(back_fiducial_id=OFFSET, front_fiducial_id=OFFSET + 1)
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -101,3 +104,8 @@ if __name__ == '__main__':
             break
     cap.release()
     cv2.destroyAllWindows()
+
+# if __name__ == '__main__':
+#     save_aruco_markers(n=4, filename="large_markers")
+#
+
