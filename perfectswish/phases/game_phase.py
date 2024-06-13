@@ -207,7 +207,10 @@ def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, up
         frame = cap.get_latest_image()
         cropped = transform_board(frame, crop_rect)
         balls: np.ndarray = find_balls(cropped)
-        balls_list = balls.tolist()
+        if balls is not None:
+            balls_list = balls.tolist()
+        else:
+            balls_list = []
         with lock:
             shared_balls_list[:] = []
             shared_balls_list.extend(balls_list)

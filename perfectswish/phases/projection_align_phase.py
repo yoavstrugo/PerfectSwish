@@ -22,7 +22,8 @@ class ProjectAlignPhase(Phase):
                 BaseImageFrame(self.__top_lvl, app, cap.get_latest_image,
                                width=other_screen.width,
                                height=other_screen.height),
-                initial_points=saved_data
+                initial_points=saved_data,
+                connected_points=True
             ),
             reference_points=crop_pts
         )

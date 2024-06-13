@@ -2,13 +2,14 @@ import tkinter as tk
 
 from perfectswish.phases.crop_phase import CropPhase
 from perfectswish.phases.game_phase import GamePhase
+from perfectswish.phases.logo_phase import LogoPhase
 from perfectswish.phases.projection_align_phase import ProjectAlignPhase
 from perfectswish.settings import DEFAULT_APP_GEOMETRY
 from perfectswish.utils import data_io, webcam
 from perfectswish.utils.monitor_utils import get_other_screen, get_root_screen
 
 DATA_FILE = 'app_data.dat'
-CAMERA = 0
+CAMERA = 1
 
 
 class PerfectSwishApp(tk.Tk):
@@ -20,8 +21,9 @@ class PerfectSwishApp(tk.Tk):
         self.__frames: list[tuple[tk.Frame, tk.Toplevel | None]] = []
         self.__cached_data = None
         self.load_data()
-        self._webcam_capture = webcam.WebcamCapture(
-            r'C:\Users\TLP-266\PyCharmProject\PerfectSwish\videos\full_balls_no_green.mp4', 1920, 1080, 24)
+        # self._webcam_capture = webcam.WebcamCapture(
+        #     r'C:\Users\TLP-266\PyCharmProject\PerfectSwish\videos\full_balls_no_green.mp4', 1920, 1080, 15)
+        self._webcam_capture = webcam.WebcamCapture(CAMERA, 1920, 1080, 15)
         self.resizable(False, False)
 
         self._phase = None
@@ -29,6 +31,9 @@ class PerfectSwishApp(tk.Tk):
         self.__other_screen = get_other_screen(self.__root_screen)
 
         self.protocol('WM_DELETE_WINDOW', self.quit)
+        # if self.__cached_data.get('project_align') is not None:
+        #     self.logo_phase()
+        # else:
         self.crop_phase()
 
     @staticmethod
@@ -75,6 +80,11 @@ class PerfectSwishApp(tk.Tk):
 
     def set_crop_rect(self, pts):
         self.crop_rect = pts
+
+    @phase_switch
+    def logo_phase(self):
+        self._phase = LogoPhase(self, self.__cached_data.get('project_align'), self.__other_screen,
+                                self.project_align_phase)
 
     @phase_switch
     def crop_phase(self):
