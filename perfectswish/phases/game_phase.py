@@ -4,6 +4,7 @@ import time
 from multiprocessing import Manager, Process
 from typing import NoReturn
 
+import cv2
 import numpy as np
 from screeninfo import Monitor
 
@@ -16,9 +17,14 @@ from perfectswish.new_image_transformation.points_frame_decorator import Points
 from perfectswish.object_detection.detect_balls import draw_circles, find_balls
 from perfectswish.object_detection.detect_cuestick import CuestickDetector
 from perfectswish.settings import BOARD_BASE_HEIGHT, BOARD_BASE_WIDTH, BOARD_SIZE, RESOLUTION_FACTOR
+from perfectswish.simulation import simulate
 from perfectswish.utils.utils import Colors
 from perfectswish.utils.webcam import MultiprocessWebcamCapture
 from perfectswish.visualization.visualize import draw_board
+
+FRONT_FIDUCIAL_ID = 4
+
+BACK_FIDUCIAL_ID = 3
 
 
 class GamePhase(Phase):
@@ -31,7 +37,7 @@ class GamePhase(Phase):
     __EMPTY_BOARD_IMAGE = np.zeros((BOARD_SIZE.height, BOARD_SIZE.width, 3), dtype=np.uint8)
 
     def __init__(self, app: "PerfectSwish", crop_rect: np.ndarray, project_rect: np.ndarray,
-                 cap: MultiprocessWebcamCapture,  other_screen: Monitor, fps: int,
+                 cap: MultiprocessWebcamCapture, other_screen: Monitor, fps: int,
                  balls_update_rate: int):
         """
         Initializes the game phase.
@@ -49,7 +55,8 @@ class GamePhase(Phase):
         self.__crop_rect = crop_rect
         self.__project_rect = project_rect
         self.__cap = cap
-        self.__cue_detector = CuestickDetector()
+        self.__cue_detector = CuestickDetector(back_fiducial_id=3, front_fiducial_id=4,
+                                               fiducial_to_stickend_ratio=2 / 3)
 
         self.__fps = fps
         self.__balls_update_rate = balls_update_rate
@@ -151,12 +158,29 @@ class GamePhase(Phase):
                 draw_circles(board_im, balls)
                 draw_circles(cropped_board, balls)
 
-            if cue is not None:
-                stickend, back_fiducial_center, front_fiducial_center = cue
-                self.__cue_detector.draw_cuestick(board_im, stickend, back_fiducial_center,
-                                                  front_fiducial_center)
-                self.__cue_detector.draw_cuestick(cropped_board, stickend, back_fiducial_center,
-                                                  front_fiducial_center)
+            self.__cue_detector.draw_cuestick(board_im)
+            self.__cue_detector.draw_cuestick(cropped_board)
+
+            if balls is not None:
+                stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.get_cuestick
+                target_ball = simulate.get_target_ball(balls, stickend, back_fiducial_center,
+                                                       front_fiducial_center)
+                if target_ball is not None:
+                    # draw the target ball
+                    cv2.circle(board_im, tuple(target_ball.astype(int)), 30, Colors.RED, 2)
+
+                    # draw the path
+                    path, ball_hit = simulate.generate_path(target_ball, balls,
+                                                            back_fiducial_center - front_fiducial_center,
+                                                            Board(*BOARD_SIZE), 5)
+                    for i in range(len(path) - 1):
+                        cv2.line(board_im, tuple(path[i].astype(int)), tuple(path[i + 1].astype(int)),
+                                 Colors.RED, 2)
+
+                    # draw the expected hit
+                    if ball_hit is not None:
+                        cv2.arrowedLine(board_im, tuple(ball_hit.white_ball_pos.astype(int)),
+                                        tuple(ball_hit.hit_point.astype(int)), Colors.RED, 2)
 
             with self.__real_board_img_lock:
                 self.__real_board_img = cropped_board
@@ -199,14 +223,17 @@ class GamePhase(Phase):
         self.__manager.shutdown()
 
 
-def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, update_rate) -> NoReturn:
+def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, update_rate) -> (
+        NoReturn):
     """
     The ball update process entry point, will run at rate of update_rate
     """
+    cue_detector = CuestickDetector(back_fiducial_id=BACK_FIDUCIAL_ID, front_fiducial_id=FRONT_FIDUCIAL_ID)
     while not stop_event.is_set():
         frame = cap.get_latest_image()
         cropped = transform_board(frame, crop_rect)
-        balls: np.ndarray = find_balls(cropped)
+        cue_detector.detect_cuestick(cropped)
+        balls: np.ndarray = find_balls(cue_detector.cover_aruco_markers(cropped))
         if balls is not None:
             balls_list = balls.tolist()
         else:

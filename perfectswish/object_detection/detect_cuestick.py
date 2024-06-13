@@ -75,14 +75,14 @@ class CuestickDetector:
         return frame
 
     def draw_cuestick(self, frame):
-        cv2.line(
-            frame,
-            tuple(self.back_fiducial_center_coords.astype(int).ravel()),
-            tuple(self.front_fiducial_center_coords.astype(int).ravel()),
-            (0, 255, 0),
-            4,
-            cv2.LINE_AA,
-        )
+        # cv2.line(
+        #     frame,
+        #     tuple(self.back_fiducial_center_coords.astype(int).ravel()),
+        #     tuple(self.front_fiducial_center_coords.astype(int).ravel()),
+        #     (0, 255, 0),
+        #     4,
+        #     cv2.LINE_AA,
+        # )
 
         stickend = self.back_fiducial_center_coords * (
                 self.fiducial_to_stickend_ratio + 1) - self.front_fiducial_center_coords * self.fiducial_to_stickend_ratio

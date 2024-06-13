@@ -17,7 +17,7 @@ def remove_fiducials(image, back_fiducial_id, front_fiducial_id):
     fiducial_detector = CuestickDetector(back_fiducial_id=back_fiducial_id, front_fiducial_id=front_fiducial_id)
     cuestick = fiducial_detector.detect_cuestick(image)
     if cuestick is not None:
-        stickend, back_fiducial_center, front_fiducial_center, corners = cuestick
+        stickend, back_fiducial_center, front_fiducial_center = cuestick
         image_copy = image.copy()
         cv2.circle(image_copy, tuple(np.int32(back_fiducial_center)), 70, (150, 200, 100), -1)
         cv2.circle(image_copy, tuple(np.int32(front_fiducial_center)), 70, (150, 200, 100), -1)
