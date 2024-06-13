@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+
+from perfectswish.object_detection.detect_cuestick import CuestickDetector
 from perfectswish.utils.frame_buffer import FrameBuffer
 from perfectswish.utils.utils import Colors, show_im
 from perfectswish.image_transformation.image_processing import transform_board
@@ -10,6 +12,18 @@ def draw_circles(image, circles):
             # print(i)
             cv2.circle(image, (int(i[0]), int(i[1])), 30, (0, 255, 0), 3)
     return image
+
+def remove_fiducials(image, back_fiducial_id, front_fiducial_id):
+    fiducial_detector = CuestickDetector(back_fiducial_id=back_fiducial_id, front_fiducial_id=front_fiducial_id)
+    cuestick = fiducial_detector.detect_cuestick(image)
+    if cuestick is not None:
+        stickend, back_fiducial_center, front_fiducial_center, corners = cuestick
+        image_copy = image.copy()
+        cv2.circle(image_copy, tuple(np.int32(back_fiducial_center)), 70, (150, 200, 100), -1)
+        cv2.circle(image_copy, tuple(np.int32(front_fiducial_center)), 70, (150, 200, 100), -1)
+        return image_copy
+    return image
+
 
 import copy
 def remove_green(_image, new_color = Colors.BLACK):
@@ -43,6 +57,9 @@ def hough_circles(image, min_radius, max_radius, min_dist, param1, param2):
 
 
 def find_balls(image, new_color=Colors.GREEN, return_intermediates=False):
+
+    # remove the fiducials
+    image = remove_fiducials(image, 3, 4)
     # Remove green from the image
     no_green_ = remove_green(image, new_color=new_color)
     # Remove white pixels

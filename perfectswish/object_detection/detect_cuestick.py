@@ -44,7 +44,7 @@ class CuestickDetector:
         self.back_fiducial_id = back_fiducial_id
         self.front_fiducial_id = front_fiducial_id
 
-    def detect_cuestick(self, frame):
+    def detect_cuestick(self, frame, return_corners=False):
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         marker_corners, marker_IDs, reject = self.detector.detectMarkers(gray_frame)
         if marker_corners:
@@ -60,6 +60,8 @@ class CuestickDetector:
             if back_fiducial_center is not None and front_fiducial_center is not None:
                 stickend = back_fiducial_center * (
                         self.fiducial_to_stickend_ratio + 1) - front_fiducial_center * self.fiducial_to_stickend_ratio
+                if return_corners:
+                    return stickend, back_fiducial_center, front_fiducial_center, marker_corners
                 return stickend, back_fiducial_center, front_fiducial_center
         return None
 
