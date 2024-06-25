@@ -193,15 +193,23 @@ class BallBuffer:
         mask = np.where(image > 30, 1, 0) # thresholded at 30
         image = image * mask
 
+        # gaussian filter the image
+        image = cv2.GaussianBlur(image, (9, 9), 0)
+
         # now find local maximas using a maximum filter
-        maxima = cv2.dilate(image, np.ones((5, 5)))
+        maxima = cv2.dilate(image, np.ones((9, 9)))
         local_maximums = np.where((image == maxima) & (image > 0))
-        return np.array(zip(local_maximums[1], local_maximums[0]))
+        if local_maximums[0].size == 0:
+            return np.array([])
+        return np.array(list(zip(local_maximums[1], local_maximums[0])))
 
     def get_likely_balls(self):
         sum_of_frames = np.average(self.balls_images_queue, axis=2)
         # get the local maximas
-        return self.__get_maximas(sum_of_frames)
+        maximas = self.__get_maximas(sum_of_frames)
+        if maximas is not None:
+            return maximas
+        return np.array([])
 
 
 class BallDetector:
@@ -227,8 +235,9 @@ class BallDetector:
             circles = np.int32(circles[0, :][:, :2])
 
         # find the black ball seperately:
-        # black_ball = find_black_ball(image, black_ball_temp)
-        # circles = np.vstack([circles, black_ball])
+        white_ball = find_white_ball(image, white_ball_temp)
+        black_ball = find_black_ball(image, black_ball_temp)
+        circles = np.vstack([circles, white_ball, black_ball])
 
         circles = np.unique(circles, axis=0)
         self.balls_buffer.add_balls(circles)
@@ -237,11 +246,11 @@ class BallDetector:
 
 if __name__ == '__main__':
     # load the video
-    cap = cv2.VideoCapture("detect_objects_test_images/fiducials_2.mp4")
+    cap = cv2.VideoCapture("detect_objects_test_images/new_test_video.mp4")
     rect = [(36, 931), (60, 79), (1754, 108), (1735, 970)]
 
     balls_finder = BallDetector(3, 4, buffer_size=10)
-    for i in range(150):
+    for i in range(500):
         ret, frame = cap.read()
         if not ret:
             break
@@ -252,6 +261,13 @@ if __name__ == '__main__':
         for ball in likely_balls:
             cv2.circle(image, ball, 30, (0, 255, 0), 3)
 
+        # draw the black and white balls
+        black_ball = find_black_ball(cropped_image, black_ball_temp)
+        white_ball = find_white_ball(cropped_image, white_ball_temp)
+        cv2.circle(image, black_ball, 30, (0, 0, 0), 3)
+        cv2.circle(image, white_ball, 30, (255, 255, 255), 3)
+
+        print(f"new frame {i}")
         # resize
         image = cv2.resize(image, (400, 800))
         cv2.imshow("balls", image)
