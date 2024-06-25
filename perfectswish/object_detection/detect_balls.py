@@ -250,11 +250,14 @@ if __name__ == '__main__':
     rect = [(36, 931), (60, 79), (1754, 108), (1735, 970)]
 
     balls_finder = BallDetector(3, 4, buffer_size=10)
+    ret, frame = cap.read()
+    # save this frame
     for i in range(500):
         ret, frame = cap.read()
         if not ret:
             break
         cropped_image = transform_board(frame, rect)
+        cv2.imwrite("balls_for_template_matching/first_frame.jpg", cropped_image)
         # cropped_image = frame
         likely_balls = balls_finder.detect_balls(cropped_image)
         image = cropped_image.copy()
