@@ -18,6 +18,7 @@ from perfectswish.object_detection.detect_balls import draw_circles, find_balls,
 from perfectswish.object_detection.detect_cuestick import CuestickDetector
 from perfectswish.settings import BOARD_BASE_HEIGHT, BOARD_BASE_WIDTH, BOARD_SIZE, RESOLUTION_FACTOR
 from perfectswish.simulation import simulate
+from perfectswish.simulation.simulate import normalize
 from perfectswish.utils.utils import Colors
 from perfectswish.utils.webcam import MultiprocessWebcamCapture
 from perfectswish.visualization.visualize import draw_board
@@ -182,8 +183,11 @@ class GamePhase(Phase):
 
                     # draw the expected hit
                     if ball_hit is not None:
-                        cv2.arrowedLine(board_im, tuple(ball_hit.white_ball_pos.astype(int)),
-                                        tuple(ball_hit.hit_point.astype(int)), Colors.RED, 2)
+                        hit_direction = normalize(ball_hit.hit_point - ball_hit.white_ball_pos)
+                        arrow_start = ball_hit.hit_point
+                        arrow_end = arrow_start + hit_direction * 70
+                        cv2.arrowedLine(board_im, tuple(arrow_start.astype(int)),
+                                        tuple(arrow_end.astype(int)), Colors.RED, 7)
 
             with self.__real_board_img_lock:
                 self.__real_board_img = cropped_board
