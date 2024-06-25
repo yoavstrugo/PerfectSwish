@@ -47,6 +47,18 @@ def transform_board(image, rect):
 
     return transformed_image
 
+def transform_point(point, matrix):
+    # Convert the point to a homogeneous coordinate for matrix multiplication
+    point_homogeneous = np.array([point[0], point[1], 1.0], dtype=np.float32).reshape(-1, 1)
+
+    # Apply the transformation matrix
+    transformed_point_homogeneous = np.dot(matrix, point_homogeneous)
+
+    # Convert back from homogeneous coordinates to 2D
+    transformed_point = transformed_point_homogeneous[:2] / transformed_point_homogeneous[2]
+
+    return (int(transformed_point[0]), int(transformed_point[1]))
+
 def generate_projection(image_to_project: Image, rect) -> Image:
     x1, y1, x2, y2, x3, y3, x4, y4 = rect
 

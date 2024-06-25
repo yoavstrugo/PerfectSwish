@@ -3,7 +3,7 @@ import threading
 import time
 from multiprocessing import Manager, Process
 from typing import NoReturn
-
+from perfectswish.settings import HOLE_RADIUS
 import cv2
 import numpy as np
 from screeninfo import Monitor
@@ -145,7 +145,10 @@ class GamePhase(Phase):
             webcam_image = self.__cap.get_latest_image()
             if not self.__crop_rect:
                 raise ValueError("Crop rect not set")
+            # stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick_outside(
+            #     webcam_image, rect=self.__crop_rect)
             cropped_board = transform_board(webcam_image, self.__crop_rect)
+
 
             balls = self.__read_balls()
             stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick(cropped_board)
@@ -159,31 +162,50 @@ class GamePhase(Phase):
                 # draw_circles(board_im, balls)
                 draw_circles(cropped_board, balls)
 
-            if cuestick_exist:
+            if cuestick_exist: # TODO: uncomment this before push
                 self.__cue_detector.draw_cuestick(board_im)
                 self.__cue_detector.draw_cuestick(cropped_board)
 
+
+            for ball in balls:
+                cv2.circle(board_im, tuple(ball.astype(int)), 23, Colors.GREEN, -1)
             if cuestick_exist and balls is not None:
                 target_ball = simulate.get_target_ball(balls, stickend, back_fiducial_center,
                                                        front_fiducial_center)
                 if target_ball is not None:
                     non_target_balls = [ball for ball in balls if not np.array_equal(ball, target_ball)]
                     # draw the target ball with a point
-                    cv2.circle(board_im, tuple(target_ball.astype(int)), 10, Colors.GREEN, 2)
+                    # cv2.circle(board_im, tuple(target_ball.astype(int)), 23, Colors.GREEN, -1)
 
-                    # draw the path
+                    # draw the path TODO: uncomment this before push
                     path, ball_hit = simulate.generate_path(target_ball, non_target_balls,
                                                             front_fiducial_center - back_fiducial_center,
                                                             Board(*BOARD_SIZE), 5)
 
                     for i in range(len(path) - 1):
                         cv2.line(board_im, tuple(path[i].astype(int)), tuple(path[i + 1].astype(int)),
-                                 Colors.RED, 2)
+                                 Colors.GREEN, 2)
 
                     # draw the expected hit
                     if ball_hit is not None:
                         cv2.arrowedLine(board_im, tuple(ball_hit.white_ball_pos.astype(int)),
-                                        tuple(ball_hit.hit_point.astype(int)), Colors.RED, 2)
+                                        tuple(ball_hit.hit_point.astype(int)), Colors.GREEN, 2)
+
+
+            # I want to draw the hles on the projection holes
+            holes = [(0, 0), (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR), (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, 0),
+                     (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR),
+                     (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR / 2),
+                     (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR / 2)]
+            for hole in holes:
+                hole_int = tuple(np.int32(hole))
+                cv2.circle(board_im, hole_int, HOLE_RADIUS , Colors.GREEN, -1)
+
+
+
+
+
+
 
             with self.__real_board_img_lock:
                 self.__real_board_img = cropped_board

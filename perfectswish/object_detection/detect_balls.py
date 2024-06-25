@@ -7,8 +7,8 @@ from perfectswish.utils.frame_buffer import FrameBuffer
 from perfectswish.utils.utils import Colors, show_im
 from perfectswish.image_transformation.image_processing import transform_board
 
-black_ball_temp = cv2.imread("balls_for_template_matching/black_ball_color_template.jpg")
-white_ball_temp = cv2.imread("balls_for_template_matching/white_ball_color_template.jpg")
+black_ball_temp = cv2.imread("perfectswish/object_detection/balls_for_template_matching/black_ball_color_template.jpg")
+white_ball_temp = cv2.imread("perfectswish/object_detection/balls_for_template_matching/white_ball_color_template.jpg")
 
 i = 0 # for debugging
 
