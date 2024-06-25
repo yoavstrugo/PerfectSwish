@@ -14,7 +14,7 @@ from perfectswish.new_image_transformation.display_app import DisplayApp
 from perfectswish.new_image_transformation.image_transform_frame_decorator import ImageTransform
 from perfectswish.new_image_transformation.phase import Phase
 from perfectswish.new_image_transformation.points_frame_decorator import Points
-from perfectswish.object_detection.detect_balls import draw_circles, find_balls
+from perfectswish.object_detection.detect_balls import draw_circles, find_balls, BallDetector
 from perfectswish.object_detection.detect_cuestick import CuestickDetector
 from perfectswish.settings import BOARD_BASE_HEIGHT, BOARD_BASE_WIDTH, BOARD_SIZE, RESOLUTION_FACTOR
 from perfectswish.simulation import simulate
@@ -231,12 +231,11 @@ def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, up
     """
     The ball update process entry point, will run at rate of update_rate
     """
-    cue_detector = CuestickDetector(back_fiducial_id=BACK_FIDUCIAL_ID, front_fiducial_id=FRONT_FIDUCIAL_ID)
+    balls_detector = BallDetector(back_fiducial_id=BACK_FIDUCIAL_ID, front_fiducial_id=FRONT_FIDUCIAL_ID)
     while not stop_event.is_set():
         frame = cap.get_latest_image()
         cropped = transform_board(frame, crop_rect)
-        cue_detector.detect_cuestick(cropped)
-        balls: np.ndarray = find_balls(cue_detector.cover_aruco_markers(cropped), new_color=(0,255,0))
+        balls: np.ndarray = balls_detector.detect_balls(cropped)
         if balls is not None:
             balls_list = balls.tolist()
         else:

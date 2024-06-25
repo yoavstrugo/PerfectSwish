@@ -196,7 +196,7 @@ class BallBuffer:
         # now find local maximas using a maximum filter
         maxima = cv2.dilate(image, np.ones((5, 5)))
         local_maximums = np.where((image == maxima) & (image > 0))
-        return list(zip(local_maximums[1], local_maximums[0]))
+        return np.array(zip(local_maximums[1], local_maximums[0]))
 
     def get_likely_balls(self):
         sum_of_frames = np.average(self.balls_images_queue, axis=2)
@@ -227,8 +227,8 @@ class BallDetector:
             circles = np.int32(circles[0, :][:, :2])
 
         # find the black ball seperately:
-        black_ball = find_black_ball(image, black_ball_temp)
-        circles = np.vstack([circles, black_ball])
+        # black_ball = find_black_ball(image, black_ball_temp)
+        # circles = np.vstack([circles, black_ball])
 
         circles = np.unique(circles, axis=0)
         self.balls_buffer.add_balls(circles)
