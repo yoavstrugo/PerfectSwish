@@ -4,14 +4,15 @@ import math
 import numpy as np
 from numpy.linalg import norm
 
+from perfectswish.utils.common_objects import Board
 from perfectswish.utils.simulation_objects import Ball_Hit, Wall_Hit
-from perfectswish.settings import REAL_BALL_RADIUS_PIXELS
+from perfectswish.settings import HOLE_RADIUS, REAL_BALL_RADIUS_PIXELS
 
 PI = math.pi
 
 def get_target_ball(balls: np.ndarray, stickend: np.ndarray, back_center: np.ndarray, front_center: np.ndarray):
     direction = normalize(front_center - back_center)
-    target_ball = None
+    target_balls = []
     # draw a line from the back center to the front center, starting at stickend,
     # and find the first ball that intersects with the line
     for ball in balls:
@@ -22,11 +23,26 @@ def get_target_ball(balls: np.ndarray, stickend: np.ndarray, back_center: np.nda
         distance = abs(np.cross(direction, stickend - ball))
         # if the distance is less than the radius of the ball, the ball is intersected by the line
         if distance <= REAL_BALL_RADIUS_PIXELS:
+            target_balls.append(ball)
+
+    # find the closest ball to the stickend
+    min_dist = math.inf
+    target_ball = None
+    for ball in target_balls:
+        dist = norm(stickend - ball)
+        if dist < min_dist:
+            min_dist = dist
             target_ball = ball
-            break
 
     return target_ball
 
+def hit_hole(wall_hit, board: Board) -> bool:
+    # holes are at corners and midddle of long sides
+    holes = [(0, 0), (0, board.height), (board.width, 0), (board.width, board.height),
+                (0, board.height / 2), (board.width, board.height / 2)]
+    for hole in holes:
+        if norm(wall_hit.hit_point - hole) <= HOLE_RADIUS:
+            return True
 
 def generate_path(white_ball, balls, direction, board, max_len):
     """
@@ -49,6 +65,9 @@ def generate_path(white_ball, balls, direction, board, max_len):
             path.append(wall_hit.hit_point)
             moving_ball = wall_hit.hit_point
             direction = wall_hit.reflection_vector
+
+            if hit_hole(wall_hit, board):
+                break
 
     if ball_hit:
         path.append(ball_hit.white_ball_pos)

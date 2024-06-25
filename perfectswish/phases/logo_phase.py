@@ -1,3 +1,4 @@
+import threading
 import time
 from typing import Callable
 
@@ -18,7 +19,7 @@ class LogoPhase(Phase):
     """
     The crop phase. This will allow the user to crop the image.
     """
-    def __init__(self, app: "PerfectSwishApp", project_rect, other_screen, next_func: Callable):
+    def __init__(self, app: "PerfectSwishApp", project_rect, other_screen, next_func: Callable, logo_path):
         """
         Initializes the crop phase.
         :param app: the main app.
@@ -30,8 +31,8 @@ class LogoPhase(Phase):
         super().__init__("logo")
         self.__next_func = next_func
 
-        self.__image = cv2.imread('assets/logo.png')
-        self.__get_logo = lambda: self.__image
+        self.__image = cv2.imread(logo_path)
+        self.__stop_flag = False
 
         self.__top_lvl = DisplayApp(other_screen)
         projection = ImageTransform(
@@ -43,10 +44,17 @@ class LogoPhase(Phase):
             )
         )
         self.__top_lvl.set_frame(projection)
+        self.__logo_timer_thread = threading.Thread(target=self.__logo_timer_proc)
+        self.__logo_timer_thread.start()
 
-    def __logo_timer_thread(self):
+    def __get_logo(self):
+        if self.__stop_flag:
+            self.__next_func()
+        return self.__image
+
+    def __logo_timer_proc(self):
         time.sleep(5)
-        self.__next_func()
+        self.__stop_flag = True
 
     def get_data(self):
         pass
@@ -54,4 +62,5 @@ class LogoPhase(Phase):
     def destroy(self):
         self.__top_lvl.withdraw()
         self.__top_lvl.destroy()
+        self.__logo_timer_thread.join()
 

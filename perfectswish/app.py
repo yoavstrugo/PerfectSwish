@@ -21,9 +21,9 @@ class PerfectSwishApp(tk.Tk):
         self.__frames: list[tuple[tk.Frame, tk.Toplevel | None]] = []
         self.__cached_data = None
         self.load_data()
-        # self._webcam_capture = webcam.WebcamCapture(
-        #     r'C:\Users\TLP-266\PyCharmProject\PerfectSwish\videos\full_balls_no_green.mp4', 1920, 1080, 15)
-        self._webcam_capture = webcam.WebcamCapture(CAMERA, 1920, 1080, 15)
+        self._webcam_capture = webcam.WebcamCapture(
+            r'C:\Users\TLP-266\PyCharmProject\PerfectSwish\videos\full_balls_no_green.mp4', 1920, 1080, 15)
+        # self._webcam_capture = webcam.WebcamCapture(CAMERA, 1920, 1080, 15)
         self.resizable(False, False)
 
         self._phase = None
@@ -34,7 +34,8 @@ class PerfectSwishApp(tk.Tk):
         # if self.__cached_data.get('project_align') is not None:
         #     self.logo_phase()
         # else:
-        self.crop_phase()
+        # self.crop_phase()
+        self.logo_phase()
 
     @staticmethod
     def phase_switch(gemoetry=DEFAULT_APP_GEOMETRY):
@@ -84,7 +85,7 @@ class PerfectSwishApp(tk.Tk):
     @phase_switch
     def logo_phase(self):
         self._phase = LogoPhase(self, self.__cached_data.get('project_align'), self.__other_screen,
-                                self.project_align_phase)
+                                self.crop_phase, r'assets/logo.png')
 
     @phase_switch
     def crop_phase(self):

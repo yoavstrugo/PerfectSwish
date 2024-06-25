@@ -148,31 +148,34 @@ class GamePhase(Phase):
             cropped_board = transform_board(webcam_image, self.__crop_rect)
 
             balls = self.__read_balls()
-            cue = self.__cue_detector.detect_cuestick(cropped_board)
+            stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick(cropped_board)
+            cuestick_exist = all([stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
 
             board_im = draw_board(
                 Board(width=BOARD_BASE_WIDTH * RESOLUTION_FACTOR,
                       height=BOARD_BASE_HEIGHT * RESOLUTION_FACTOR),
                 Colors.RED)
             if balls is not None:
-                draw_circles(board_im, balls)
+                # draw_circles(board_im, balls)
                 draw_circles(cropped_board, balls)
 
-            self.__cue_detector.draw_cuestick(board_im)
-            self.__cue_detector.draw_cuestick(cropped_board)
+            if cuestick_exist:
+                self.__cue_detector.draw_cuestick(board_im)
+                self.__cue_detector.draw_cuestick(cropped_board)
 
-            if balls is not None:
-                stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.get_cuestick
+            if cuestick_exist and balls is not None:
                 target_ball = simulate.get_target_ball(balls, stickend, back_fiducial_center,
                                                        front_fiducial_center)
                 if target_ball is not None:
-                    # draw the target ball
-                    cv2.circle(board_im, tuple(target_ball.astype(int)), 30, Colors.RED, 2)
+                    non_target_balls = [ball for ball in balls if not np.array_equal(ball, target_ball)]
+                    # draw the target ball with a point
+                    cv2.circle(board_im, tuple(target_ball.astype(int)), 10, Colors.GREEN, 2)
 
                     # draw the path
-                    path, ball_hit = simulate.generate_path(target_ball, balls,
-                                                            back_fiducial_center - front_fiducial_center,
+                    path, ball_hit = simulate.generate_path(target_ball, non_target_balls,
+                                                            front_fiducial_center - back_fiducial_center,
                                                             Board(*BOARD_SIZE), 5)
+
                     for i in range(len(path) - 1):
                         cv2.line(board_im, tuple(path[i].astype(int)), tuple(path[i + 1].astype(int)),
                                  Colors.RED, 2)
@@ -233,7 +236,7 @@ def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, up
         frame = cap.get_latest_image()
         cropped = transform_board(frame, crop_rect)
         cue_detector.detect_cuestick(cropped)
-        balls: np.ndarray = find_balls(cue_detector.cover_aruco_markers(cropped))
+        balls: np.ndarray = find_balls(cue_detector.cover_aruco_markers(cropped), new_color=(0,255,0))
         if balls is not None:
             balls_list = balls.tolist()
         else:

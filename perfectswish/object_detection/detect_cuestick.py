@@ -62,12 +62,12 @@ class CuestickDetector:
             if back_fiducial_center is not None and front_fiducial_center is not None:
                 self.back_fiducial_center_coords = back_fiducial_center
                 self.front_fiducial_center_coords = front_fiducial_center
-                stickend = self.back_fiducial_center_coords * (
-                        self.fiducial_to_stickend_ratio + 1) - self.front_fiducial_center_coords * self.fiducial_to_stickend_ratio
-                if return_corners:
-                    return stickend, self.back_fiducial_center_coords, self.front_fiducial_center_coords, marker_corners
-                return stickend, self.back_fiducial_center_coords, self.front_fiducial_center_coords
-        return None
+        stickend = self.back_fiducial_center_coords * (
+                self.fiducial_to_stickend_ratio + 1) - self.front_fiducial_center_coords * self.fiducial_to_stickend_ratio
+        if return_corners:
+            return stickend, self.back_fiducial_center_coords, self.front_fiducial_center_coords, marker_corners
+        return stickend, self.back_fiducial_center_coords, self.front_fiducial_center_coords
+
 
     def cover_aruco_markers(self, frame, radius=70):
         cv2.circle(frame, tuple(np.int32(self.back_fiducial_center_coords)), radius, (150, 200, 100), -1)
@@ -84,11 +84,11 @@ class CuestickDetector:
         #     cv2.LINE_AA,
         # )
 
-        stickend = self.back_fiducial_center_coords * (
-                self.fiducial_to_stickend_ratio + 1) - self.front_fiducial_center_coords * self.fiducial_to_stickend_ratio
+        stickend = self.back_fiducial_center_coords + (self.front_fiducial_center_coords -
+                                                       self.back_fiducial_center_coords) * (1 + self.fiducial_to_stickend_ratio)
         cv2.circle(frame, tuple(stickend.astype(int).ravel()), 10, (0, 0, 255), -1)
 
-        vector = self.back_fiducial_center_coords - self.front_fiducial_center_coords
+        vector = self.front_fiducial_center_coords - self.back_fiducial_center_coords
         if np.linalg.norm(vector) != 0:
             vector = vector / np.linalg.norm(vector)
         cv2.arrowedLine(
