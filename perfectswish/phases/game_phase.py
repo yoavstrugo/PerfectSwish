@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from screeninfo import Monitor
 
-from perfectswish.image_transformation.image_processing import Board, transform_board
+from perfectswish.image_transformation.image_processing import Board, transform_board, transform_cue
 from perfectswish.new_image_transformation.base_image_frame import BaseImageFrame
 from perfectswish.new_image_transformation.display_app import DisplayApp
 from perfectswish.new_image_transformation.image_transform_frame_decorator import ImageTransform
@@ -137,6 +137,9 @@ class GamePhase(Phase):
         with self.__output_image_lock:
             self.__next_image = im
 
+
+
+
     def __generate_output_image(self) -> NoReturn:
         """
         This will continously generate the output image.
@@ -145,14 +148,26 @@ class GamePhase(Phase):
             webcam_image = self.__cap.get_latest_image()
             if not self.__crop_rect:
                 raise ValueError("Crop rect not set")
-            # stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick_outside(
-            #     webcam_image, rect=self.__crop_rect)
-            cropped_board = transform_board(webcam_image, self.__crop_rect)
 
+            stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick(webcam_image)
+
+            cropped_board, stickend, back_fiducial_center, front_fiducial_center = transform_cue(webcam_image, self.__crop_rect, stickend, back_fiducial_center, front_fiducial_center)
 
             balls = self.__read_balls()
-            stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick(cropped_board)
+
             cuestick_exist = all([stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
+            # if cuestick_exist:
+            #     cv2.line(cropped_board, tuple(stickend.astype(int)), tuple(back_fiducial_center.astype(int)), Colors.GREEN, 7)
+            #     cv2.line(cropped_board, tuple(back_fiducial_center.astype(int)), tuple(front_fiducial_center.astype(int)), Colors.GREEN, 7)
+            #     # resize the image to small
+            #     cropped_board = cv2.resize(cropped_board, (0, 0), fx=0.5, fy=0.5)
+            #     webcam_image = cv2.resize(webcam_image, (0, 0), fx=0.5, fy=0.5)
+            #     cv2.imshow("webcam", webcam_image)
+            #     cv2.imshow("cropped", cropped_board)
+            #     cv2.waitKey(0)
+            #     raise ValueError("stop")
+
+
 
             board_im = draw_board(
                 Board(width=BOARD_BASE_WIDTH * RESOLUTION_FACTOR,
@@ -163,6 +178,7 @@ class GamePhase(Phase):
                 draw_circles(cropped_board, balls)
 
             if cuestick_exist: # TODO: uncomment this before push
+                print("cuestick exist", stickend, back_fiducial_center, front_fiducial_center)
                 self.__cue_detector.draw_cuestick(board_im)
                 self.__cue_detector.draw_cuestick(cropped_board)
 
