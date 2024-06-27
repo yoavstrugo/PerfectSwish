@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from perfectswish.object_detection.detect_cuestick import CuestickDetector
+from perfectswish.utils import webcam
 from perfectswish.utils.frame_buffer import FrameBuffer
 from perfectswish.utils.utils import Colors, show_im
 from perfectswish.image_transformation.image_processing import transform_board
@@ -245,8 +246,7 @@ class BallDetector:
     def detect_balls(self, image):
 
         # remove the fiducials
-        image = remove_fiducials(image, self.fiducial_detector.back_fiducial_id,
-                                 self.fiducial_detector.front_fiducial_id)
+        image = self.remove_fiducials(image)
         # Remove green from the image
         no_green_ = remove_green(image, new_color=Colors.GREEN)
         # Apply bilateral filter
@@ -282,7 +282,9 @@ class BallDetector:
 
 if __name__ == '__main__':
     # load the video
-    cap = cv2.VideoCapture("perfectswish/object_detection/detect_objects_test_images/newest_test_video.mp4")
+    # cap = cv2.VideoCapture("perfectswish/object_detection/detect_objects_test_images/newest_test_video.mp4")
+    cap = webcam.initialize_webcam(1)
+
     rect = [(36, 931), (60, 79), (1754, 108), (1735, 970)]
 
     balls_finder = BallDetector(3, 4, buffer_size=10)
