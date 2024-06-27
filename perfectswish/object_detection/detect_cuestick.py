@@ -52,7 +52,7 @@ class CueStickBuffer:
 
 
 class CuestickDetector:
-    def __init__(self, fiducial_to_stickend_ratio=4 / 9, back_fiducial_id=8, front_fiducial_id=9):
+    def __init__(self, fiducial_to_stickend_ratio=4 / 9, back_fiducial_id=3, front_fiducial_id=4):
         self.marker_dict = marker_dict
         self.param_markers = aruco.DetectorParameters()
         self.detector = cv2.aruco.ArucoDetector(self.marker_dict, self.param_markers)

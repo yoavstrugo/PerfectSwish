@@ -82,6 +82,7 @@ def hough_circles(image, min_radius, max_radius, min_dist, param1, param2):
 
 
 def find_balls(image, new_color=Colors.GREEN, return_intermediates=False):
+    '''DONT USE THIS FUNCTION, FOR DEMONSTRATION PURPOSES ONLY, USE BallDetector INSTEAD'''
     # remove the fiducials
     image = remove_fiducials(image, 3, 4)
     # Remove green from the image
@@ -231,6 +232,15 @@ class BallDetector:
                                                   front_fiducial_id=front_fiducial_id)
         self.balls_buffer = BallBuffer(buffer_size)
 
+    def remove_fiducials(self, image):
+        cuestick = self.fiducial_detector.detect_cuestick(image)
+        if cuestick is not None:
+            stickend, back_fiducial_center, front_fiducial_center = cuestick
+            image_copy = image.copy()
+            cv2.circle(image_copy, tuple(np.int32(back_fiducial_center)), 70, (150, 200, 100), -1)
+            cv2.circle(image_copy, tuple(np.int32(front_fiducial_center)), 70, (150, 200, 100), -1)
+            return image_copy
+        return image
     @timer_func
     def detect_balls(self, image):
 
@@ -272,7 +282,7 @@ class BallDetector:
 
 if __name__ == '__main__':
     # load the video
-    cap = cv2.VideoCapture("detect_objects_test_images/newest_test_video.mp4")
+    cap = cv2.VideoCapture("perfectswish/object_detection/detect_objects_test_images/newest_test_video.mp4")
     rect = [(36, 931), (60, 79), (1754, 108), (1735, 970)]
 
     balls_finder = BallDetector(3, 4, buffer_size=10)
@@ -304,14 +314,15 @@ if __name__ == '__main__':
         cropped_copy = copy.deepcopy(cropped_image)
         if cv2.waitKey(1) & 0xFF == ord('d'):
             # show the intermediates
-            intermediates = draw_intermediate_images(bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK)),
-                                        canny_edge_detection(bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK))),
-                                        cropped_copy, remove_green(cropped_image, new_color=Colors.BLACK))
+            intermediates = draw_intermediate_images(
+                bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK)),
+                canny_edge_detection(bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK))),
+                remove_fiducials(cropped_copy, 3, 4), remove_green(remove_fiducials(cropped_copy, 3, 4), new_color=Colors.GREEN))
             show_im(intermediates)
             continue
 
         if cv2.waitKey(1) & 0xFF == ord('s'):
-            for j in range (10):
+            for j in range(10):
                 ret, frame = cap.read()
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
