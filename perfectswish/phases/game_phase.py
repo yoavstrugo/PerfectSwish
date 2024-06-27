@@ -138,7 +138,7 @@ class GamePhase(Phase):
         with self.__output_image_lock:
             self.__next_image = im
 
-    def __generate_output_image(self) -> NoReturn:
+    def __generate_output_image(self, SHOW_HOLES=False) -> NoReturn:
         """
         This will continously generate the output image.
         """
@@ -150,6 +150,8 @@ class GamePhase(Phase):
             stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick(webcam_image)
 
             cropped_board, stickend, back_fiducial_center, front_fiducial_center = transform_cue(webcam_image, self.__crop_rect, stickend, back_fiducial_center, front_fiducial_center)
+            self.__cue_detector.back_fiducial_center_coords = back_fiducial_center
+            self.__cue_detector.front_fiducial_center_coords = front_fiducial_center
 
             balls = self.__read_balls()
 
@@ -216,7 +218,8 @@ class GamePhase(Phase):
                      (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR / 2)]
             for hole in holes:
                 hole_int = tuple(np.int32(hole))
-                cv2.circle(board_im, hole_int, HOLE_RADIUS , Colors.GREEN, -1)
+                if SHOW_HOLES:
+                    cv2.circle(board_im, hole_int, HOLE_RADIUS , Colors.GREEN, -1)
 
 
 

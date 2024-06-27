@@ -48,7 +48,7 @@ def transform_board(image, rect):
     return transformed_image
 
 
-def transform_cue(image, rect, back_fiducial_center, front_fiducial_center, stickend):
+def transform_cue(image, rect, stickend, back_fiducial_center, front_fiducial_center):
     x1, y1, x2, y2, x3, y3, x4, y4 = rect[0][0], rect[0][1], rect[1][0], rect[1][1], rect[2][0], rect[2][1], rect[3][0], \
     rect[3][1]
 
@@ -73,7 +73,7 @@ def transform_cue(image, rect, back_fiducial_center, front_fiducial_center, stic
                              matrix)[0][0]
     stickend_transformed = \
     cv2.perspectiveTransform(np.array([[[stickend[0], stickend[1]]]], dtype=np.float32), matrix)[0][0]
-    return transformed_image, back_fiducial_center_transformed, front_fiducial_center_transformed, stickend_transformed
+    return transformed_image, stickend_transformed, back_fiducial_center_transformed, front_fiducial_center_transformed
 
 
 
