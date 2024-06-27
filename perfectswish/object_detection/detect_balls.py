@@ -24,6 +24,7 @@ def timer_func(func):
 
 
 black_ball_temp = cv2.imread(r"perfectswish/object_detection/balls_for_template_matching/black_ball_color_template.jpg")
+secondary_black_ball_temp = cv2.imread(r"perfectswish/object_detection/balls_for_template_matching/secondary_black_ball_color_template.jpg")
 white_ball_temp = cv2.imread(r"perfectswish/object_detection/balls_for_template_matching/white_ball_color_template.jpg")
 
 
@@ -152,10 +153,15 @@ def gamma_correction(image, gamma=1.0):
     return cv2.LUT(image, table)
 
 
-def find_black_ball(image, black_ball_template=black_ball_temp):
+def find_black_ball(image, black_ball_template=black_ball_temp, secondary_black_ball_template=secondary_black_ball_temp):
     res = cv2.matchTemplate(image, black_ball_template, cv2.TM_CCOEFF_NORMED)
     # theres only one black ball in the image so we can just take the max value
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+    if max_val < 0.4:
+        # try the second template
+        res = cv2.matchTemplate(image, secondary_black_ball_template, cv2.TM_CCOEFF_NORMED)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
     # correct the max location
     max_loc = (max_loc[0] + black_ball_template.shape[1] // 2, max_loc[1] + black_ball_template.shape[0] // 2)
     # draw a circle around the black ball
@@ -282,8 +288,8 @@ class BallDetector:
 
 if __name__ == '__main__':
     # load the video
-    # cap = cv2.VideoCapture("perfectswish/object_detection/detect_objects_test_images/newest_test_video.mp4")
-    cap = webcam.initialize_webcam(1)
+    cap = cv2.VideoCapture("perfectswish/object_detection/detect_objects_test_images/newest_test_video.mp4")
+    # cap = webcam.initialize_webcam(1)
 
     rect = [(36, 931), (60, 79), (1754, 108), (1735, 970)]
 
