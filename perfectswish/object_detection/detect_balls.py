@@ -25,8 +25,8 @@ def timer_func(func):
     return wrap_func
 
 
-black_ball_temp = cv2.imread(r"perfectswish\object_detection\balls_for_template_matching\black_ball_color_template.jpg")
-white_ball_temp = cv2.imread(r"perfectswish\object_detection\balls_for_template_matching\white_ball_color_template.jpg")
+black_ball_temp = cv2.imread(r"perfectswish/object_detection/balls_for_template_matching/black_ball_color_template.jpg")
+white_ball_temp = cv2.imread(r"perfectswish/object_detection/balls_for_template_matching/white_ball_color_template.jpg")
 
 
 def draw_circles(image, circles):
@@ -242,7 +242,7 @@ class BallDetector:
         image = remove_fiducials(image, self.fiducial_detector.back_fiducial_id,
                                  self.fiducial_detector.front_fiducial_id)
         # Remove green from the image
-        no_green_ = remove_green(image, new_color=Colors.BLACK)
+        no_green_ = remove_green(image, new_color=Colors.GREEN)
         # Apply bilateral filter
         bilat_ = bilateral_filter(no_green_)
         # Apply canny edge detection
@@ -253,15 +253,19 @@ class BallDetector:
         circles = self.change_circles_format(circles)
 
         # find the black ball seperately:
-        white_ball = find_white_ball(image, white_ball_temp)
-        if white_ball is not None:
-            circles = np.vstack([circles, white_ball])
-        black_ball = find_black_ball(image, black_ball_temp)
-        if black_ball is not None:
-            circles = np.vstack([circles, black_ball])
-
-        circles = np.unique(circles, axis=0)
-        self.balls_buffer.add_balls(circles)
+        try:
+            white_ball = find_white_ball(image, white_ball_temp)
+            if white_ball is not None:
+                circles = np.vstack([circles, white_ball])
+            black_ball = find_black_ball(image, black_ball_temp)
+            if black_ball is not None:
+                circles = np.vstack([circles, black_ball])
+        except:
+            pass
+        # if circles is not empty:
+        if circles is not None:
+            circles = np.unique(circles, axis=0)
+            self.balls_buffer.add_balls(circles)
         return self.balls_buffer.get_likely_balls()
 
     def change_circles_format(self, circles):
@@ -272,7 +276,7 @@ class BallDetector:
 
 if __name__ == '__main__':
     # load the video
-    cap = cv2.VideoCapture("detect_objects_test_images/new_test_video.mp4")
+    cap = cv2.VideoCapture("detect_objects_test_images/newest_test_video.mp4")
     rect = [(36, 931), (60, 79), (1754, 108), (1735, 970)]
 
     balls_finder = BallDetector(3, 4, buffer_size=10)
@@ -298,8 +302,22 @@ if __name__ == '__main__':
 
         print(f"new frame {i}")
         # resize
+
         image = cv2.resize(image, (400, 800))
         cv2.imshow("balls", image)
+        cropped_copy = copy.deepcopy(cropped_image)
+        if cv2.waitKey(1) & 0xFF == ord('d'):
+            # show the intermediates
+            intermediates = draw_intermediate_images(bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK)),
+                                        canny_edge_detection(bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK))),
+                                        cropped_copy, remove_green(cropped_image, new_color=Colors.BLACK))
+            show_im(intermediates)
+            continue
+
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            for j in range (10):
+                ret, frame = cap.read()
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
