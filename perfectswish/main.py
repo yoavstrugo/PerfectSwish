@@ -14,7 +14,6 @@ from perfectswish.gui.live_image_display import LiveImageDisplay
 from perfectswish.gui.take_image_gui import take_image
 from perfectswish.image_transformation.gui_crop import get_camera_rect
 from perfectswish.image_transformation.gui_projection import get_projection_rect
-from perfectswish.object_detection.detect_balls import draw_circles, find_balls
 from perfectswish.object_detection.detect_cuestick import CuestickDetector
 from perfectswish.simulation import simulate
 from perfectswish.visualization.visualize import draw_board, visualize_pool_board
