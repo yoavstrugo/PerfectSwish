@@ -65,15 +65,17 @@ def transform_cue(image, rect, stickend, back_fiducial_center, front_fiducial_ce
 
     # Apply the perspective transformation to the original image
     transformed_image = cv2.warpPerspective(image, matrix, (target_width, target_height))
-    back_fiducial_center_transformed = \
-    cv2.perspectiveTransform(np.array([[[back_fiducial_center[0], back_fiducial_center[1]]]], dtype=np.float32),
-                             matrix)[0][0]
-    front_fiducial_center_transformed = \
-    cv2.perspectiveTransform(np.array([[[front_fiducial_center[0], front_fiducial_center[1]]]], dtype=np.float32),
-                             matrix)[0][0]
-    stickend_transformed = \
-    cv2.perspectiveTransform(np.array([[[stickend[0], stickend[1]]]], dtype=np.float32), matrix)[0][0]
-    return transformed_image, stickend_transformed, back_fiducial_center_transformed, front_fiducial_center_transformed
+    if all(v is not None for v in [stickend, back_fiducial_center, front_fiducial_center]):
+        back_fiducial_center_transformed = \
+        cv2.perspectiveTransform(np.array([[[back_fiducial_center[0], back_fiducial_center[1]]]], dtype=np.float32),
+                                 matrix)[0][0]
+        front_fiducial_center_transformed = \
+        cv2.perspectiveTransform(np.array([[[front_fiducial_center[0], front_fiducial_center[1]]]], dtype=np.float32),
+                                 matrix)[0][0]
+        stickend_transformed = \
+        cv2.perspectiveTransform(np.array([[[stickend[0], stickend[1]]]], dtype=np.float32), matrix)[0][0]
+        return transformed_image, stickend_transformed, back_fiducial_center_transformed, front_fiducial_center_transformed
+    return transformed_image, None, None, None
 
 
 

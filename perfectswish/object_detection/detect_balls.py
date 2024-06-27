@@ -9,9 +9,6 @@ from perfectswish.utils.frame_buffer import FrameBuffer
 from perfectswish.utils.utils import Colors, show_im
 from perfectswish.image_transformation.image_processing import transform_board
 
-black_ball_temp = cv2.imread("balls_for_template_matching/black_ball_color_template.jpg")
-white_ball_temp = cv2.imread("balls_for_template_matching/white_ball_color_template.jpg")
-
 def timer_func(func):
     # This function shows the execution time of
     # the function object passed
@@ -19,7 +16,7 @@ def timer_func(func):
         t1 = time()
         result = func(*args, **kwargs)
         t2 = time()
-        print(f'Function {func.__name__!r} executed in {(t2 - t1):.4f}s')
+        # print(f'Function {func.__name__!r} executed in {(t2 - t1):.4f}s')
         return result
 
     return wrap_func
@@ -39,9 +36,8 @@ def draw_circles(image, circles):
 
 def remove_fiducials(image, back_fiducial_id, front_fiducial_id):
     fiducial_detector = CuestickDetector(back_fiducial_id=back_fiducial_id, front_fiducial_id=front_fiducial_id)
-    cuestick = fiducial_detector.detect_cuestick(image)
-    if cuestick is not None:
-        stickend, back_fiducial_center, front_fiducial_center = cuestick
+    stickend, back_fiducial_center, front_fiducial_center = fiducial_detector.detect_cuestick(image)
+    if stickend is not None and back_fiducial_center is not None and front_fiducial_center is not None:
         image_copy = image.copy()
         cv2.circle(image_copy, tuple(np.int32(back_fiducial_center)), 70, (150, 200, 100), -1)
         cv2.circle(image_copy, tuple(np.int32(front_fiducial_center)), 70, (150, 200, 100), -1)

@@ -59,8 +59,8 @@ class CuestickDetector:
         self.fiducial_to_stickend_ratio = fiducial_to_stickend_ratio
         self.back_fiducial_id = back_fiducial_id
         self.front_fiducial_id = front_fiducial_id
-        self.back_fiducial_center_coords = np.array([0, 0])
-        self.front_fiducial_center_coords = np.array([0, 0])
+        self.back_fiducial_center_coords = None
+        self.front_fiducial_center_coords = None
 
 
 
@@ -113,7 +113,7 @@ class CuestickDetector:
 
 
 
-    def detect_cuestick(self, frame, return_corners=False):
+    def detect_cuestick(self, frame, return_corners=False, debug=False):
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         marker_corners, marker_IDs, reject = self.detector.detectMarkers(gray_frame)
         if marker_corners:
@@ -129,10 +129,16 @@ class CuestickDetector:
             if back_fiducial_center is not None and front_fiducial_center is not None:
                 self.back_fiducial_center_coords = back_fiducial_center
                 self.front_fiducial_center_coords = front_fiducial_center
+        if self.back_fiducial_center_coords is None or self.front_fiducial_center_coords is None:
+            if debug:
+                return None, None, None, None, None
+            return None, None, None
         stickend = self.back_fiducial_center_coords * (
                 self.fiducial_to_stickend_ratio + 1) - self.front_fiducial_center_coords * self.fiducial_to_stickend_ratio
         if return_corners:
             return stickend, self.back_fiducial_center_coords, self.front_fiducial_center_coords, marker_corners
+        if debug:
+            return stickend, self.back_fiducial_center_coords, self.front_fiducial_center_coords, marker_corners, marker_IDs
         return stickend, self.back_fiducial_center_coords, self.front_fiducial_center_coords
 
 
@@ -141,7 +147,7 @@ class CuestickDetector:
         cv2.circle(frame, tuple(np.int32(self.front_fiducial_center_coords)), radius, (150, 200, 100), -1)
         return frame
 
-    def draw_cuestick(self, frame):
+    def draw_cuestick(self, frame, front_fiducial_center_coords=None, back_fiducial_center_coords=None):
         # cv2.line(
         #     frame,
         #     tuple(self.back_fiducial_center_coords.astype(int).ravel()),
@@ -151,11 +157,17 @@ class CuestickDetector:
         #     cv2.LINE_AA,
         # )
 
-        stickend = self.back_fiducial_center_coords + (self.front_fiducial_center_coords -
-                                                       self.back_fiducial_center_coords) * (1 + self.fiducial_to_stickend_ratio)
+        if front_fiducial_center_coords is None or back_fiducial_center_coords is None:
+            front_fiducial_center_coords = self.front_fiducial_center_coords
+            back_fiducial_center_coords = self.back_fiducial_center_coords
+
+        stickend = back_fiducial_center_coords + (front_fiducial_center_coords -
+                                                       back_fiducial_center_coords) * (1 + self.fiducial_to_stickend_ratio)
+        # if stickend[0] < 330 or stickend[0] > 500 or stickend[1] < 290 or stickend[1] > 315:
+        #     print(f"Stickend out of bound: {stickend, self.back_fiducial_center_coords, self.front_fiducial_center_coords}")
         cv2.circle(frame, tuple(stickend.astype(int).ravel()), 10, (0, 0, 255), -1)
 
-        vector = self.front_fiducial_center_coords - self.back_fiducial_center_coords
+        vector = front_fiducial_center_coords - back_fiducial_center_coords
         if np.linalg.norm(vector) != 0:
             vector = vector / np.linalg.norm(vector)
         cv2.arrowedLine(

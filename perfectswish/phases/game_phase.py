@@ -21,6 +21,7 @@ from perfectswish.simulation.simulate import normalize
 from perfectswish.utils.utils import Colors
 from perfectswish.utils.webcam import MultiprocessWebcamCapture
 from perfectswish.visualization.visualize import draw_board
+from perfectswish.simulation.simulate import REAL_BALL_RADIUS_PIXELS
 
 FRONT_FIDUCIAL_ID = 4
 
@@ -145,13 +146,14 @@ class GamePhase(Phase):
             webcam_image = self.__cap.get_latest_image()
             if not self.__crop_rect:
                 raise ValueError("Crop rect not set")
-            stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick(webcam_image)
+            stickend, back_fiducial_center, front_fiducial_center, marker_corners, marker_IDs = self.__cue_detector.detect_cuestick(webcam_image, debug=True)
             cropped_board, stickend, back_fiducial_center, front_fiducial_center = transform_cue(webcam_image,
-                                                                                                 self.__crop_rect, stickend,
-                                                        back_fiducial_center,
+                                                                                                 self.__crop_rect,
+                                                                                                 stickend,
+                                                                                                 back_fiducial_center,
                                                                                                  front_fiducial_center)
-            self.__cue_detector.back_fiducial_center_coords = back_fiducial_center
-            self.__cue_detector.front_fiducial_center_coords = front_fiducial_center
+            # self.__cue_detector.back_fiducial_center_coords = back_fiducial_center
+            # self.__cue_detector.front_fiducial_center_coords = front_fiducial_center
             cuestick_exist = all([stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
             balls = self.__read_balls()
             board_im = draw_board(
@@ -163,8 +165,8 @@ class GamePhase(Phase):
                 draw_circles(cropped_board, balls)
 
             if cuestick_exist:
-                self.__cue_detector.draw_cuestick(board_im)
-                self.__cue_detector.draw_cuestick(cropped_board)
+                self.__cue_detector.draw_cuestick(board_im, front_fiducial_center, back_fiducial_center)
+                # self.__cue_detector.draw_cuestick(cropped_board)
 
             if cuestick_exist and balls is not None:
                 target_ball = simulate.get_target_ball(balls, stickend, back_fiducial_center,
@@ -190,8 +192,8 @@ class GamePhase(Phase):
                         arrow_end = arrow_start + hit_direction * 70
                         cv2.arrowedLine(board_im, tuple(arrow_start.astype(int)),
                                         tuple(arrow_end.astype(int)), Colors.GREEN, 7)
-                for ball in balls:
-                    cv2.circle(board_im, tuple(ball.astype(int)), 23, Colors.GREEN, 15)
+            for ball in balls:
+                cv2.circle(board_im, tuple(ball.astype(int)), REAL_BALL_RADIUS_PIXELS, Colors.GREEN, 15)
 
             if SHOW_HOLES:
                 holes = [(0, 0), (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR), (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, 0),
