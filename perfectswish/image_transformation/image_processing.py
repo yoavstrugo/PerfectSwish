@@ -47,6 +47,50 @@ def transform_board(image, rect):
 
     return transformed_image
 
+
+def transform_cue(image, rect, stickend, back_fiducial_center, front_fiducial_center):
+    x1, y1, x2, y2, x3, y3, x4, y4 = rect[0][0], rect[0][1], rect[1][0], rect[1][1], rect[2][0], rect[2][1], rect[3][0], \
+    rect[3][1]
+
+    # Set the target size for the new image
+    target_width = BOARD_BASE_WIDTH * RESOLUTION_FACTOR
+    target_height = BOARD_BASE_HEIGHT * RESOLUTION_FACTOR
+
+    # Define the new coordinates of the corners in the new image
+    new_rect = np.array([[0, 0], [target_width, 0], [target_width, target_height], [0, target_height]],
+                        dtype=np.float32)
+
+    # Calculate the perspective transformation matrix
+    matrix = cv2.getPerspectiveTransform(np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]], dtype=np.float32), new_rect)
+
+    # Apply the perspective transformation to the original image
+    transformed_image = cv2.warpPerspective(image, matrix, (target_width, target_height))
+    if all(v is not None for v in [stickend, back_fiducial_center, front_fiducial_center]):
+        back_fiducial_center_transformed = \
+        cv2.perspectiveTransform(np.array([[[back_fiducial_center[0], back_fiducial_center[1]]]], dtype=np.float32),
+                                 matrix)[0][0]
+        front_fiducial_center_transformed = \
+        cv2.perspectiveTransform(np.array([[[front_fiducial_center[0], front_fiducial_center[1]]]], dtype=np.float32),
+                                 matrix)[0][0]
+        stickend_transformed = \
+        cv2.perspectiveTransform(np.array([[[stickend[0], stickend[1]]]], dtype=np.float32), matrix)[0][0]
+        return transformed_image, stickend_transformed, back_fiducial_center_transformed, front_fiducial_center_transformed
+    return transformed_image, None, None, None
+
+
+
+def transform_point(point, matrix):
+    # Convert the point to a homogeneous coordinate for matrix multiplication
+    point_homogeneous = np.array([point[0], point[1], 1.0], dtype=np.float32).reshape(-1, 1)
+
+    # Apply the transformation matrix
+    transformed_point_homogeneous = np.dot(matrix, point_homogeneous)
+
+    # Convert back from homogeneous coordinates to 2D
+    transformed_point = transformed_point_homogeneous[:2] / transformed_point_homogeneous[2]
+
+    return (int(transformed_point[0]), int(transformed_point[1]))
+
 def generate_projection(image_to_project: Image, rect) -> Image:
     x1, y1, x2, y2, x3, y3, x4, y4 = rect
 

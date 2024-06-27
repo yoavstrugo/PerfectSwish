@@ -3,12 +3,11 @@ import threading
 import time
 from multiprocessing import Manager, Process
 from typing import NoReturn
-
+from perfectswish.settings import HOLE_RADIUS
 import cv2
 import numpy as np
 from screeninfo import Monitor
-
-from perfectswish.image_transformation.image_processing import Board, transform_board
+from perfectswish.image_transformation.image_processing import Board, transform_board, transform_cue
 from perfectswish.new_image_transformation.base_image_frame import BaseImageFrame
 from perfectswish.new_image_transformation.display_app import DisplayApp
 from perfectswish.new_image_transformation.image_transform_frame_decorator import ImageTransform
@@ -22,6 +21,7 @@ from perfectswish.simulation.simulate import normalize
 from perfectswish.utils.utils import Colors
 from perfectswish.utils.webcam import MultiprocessWebcamCapture
 from perfectswish.visualization.visualize import draw_board
+from perfectswish.simulation.simulate import REAL_BALL_RADIUS_PIXELS
 
 FRONT_FIDUCIAL_ID = 4
 
@@ -138,7 +138,7 @@ class GamePhase(Phase):
         with self.__output_image_lock:
             self.__next_image = im
 
-    def __generate_output_image(self) -> NoReturn:
+    def __generate_output_image(self, SHOW_HOLES = False) -> NoReturn:
         """
         This will continously generate the output image.
         """
@@ -146,23 +146,27 @@ class GamePhase(Phase):
             webcam_image = self.__cap.get_latest_image()
             if not self.__crop_rect:
                 raise ValueError("Crop rect not set")
-            cropped_board = transform_board(webcam_image, self.__crop_rect)
-
-            balls = self.__read_balls()
-            stickend, back_fiducial_center, front_fiducial_center = self.__cue_detector.detect_cuestick(cropped_board)
+            stickend, back_fiducial_center, front_fiducial_center, marker_corners, marker_IDs = self.__cue_detector.detect_cuestick(webcam_image, debug=True)
+            cropped_board, stickend, back_fiducial_center, front_fiducial_center = transform_cue(webcam_image,
+                                                                                                 self.__crop_rect,
+                                                                                                 stickend,
+                                                                                                 back_fiducial_center,
+                                                                                                 front_fiducial_center)
+            # self.__cue_detector.back_fiducial_center_coords = back_fiducial_center
+            # self.__cue_detector.front_fiducial_center_coords = front_fiducial_center
             cuestick_exist = all([stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
-
+            balls = self.__read_balls()
             board_im = draw_board(
                 Board(width=BOARD_BASE_WIDTH * RESOLUTION_FACTOR,
                       height=BOARD_BASE_HEIGHT * RESOLUTION_FACTOR),
-                Colors.RED)
+                Colors.GREEN)
             if balls is not None:
                 # draw_circles(board_im, balls)
                 draw_circles(cropped_board, balls)
 
             if cuestick_exist:
-                self.__cue_detector.draw_cuestick(board_im)
-                self.__cue_detector.draw_cuestick(cropped_board)
+                self.__cue_detector.draw_cuestick(board_im, front_fiducial_center, back_fiducial_center)
+                # self.__cue_detector.draw_cuestick(cropped_board)
 
             if cuestick_exist and balls is not None:
                 target_ball = simulate.get_target_ball(balls, stickend, back_fiducial_center,
@@ -170,7 +174,7 @@ class GamePhase(Phase):
                 if target_ball is not None:
                     non_target_balls = [ball for ball in balls if not np.array_equal(ball, target_ball)]
                     # draw the target ball with a point
-                    # cv2.circle(board_im, tuple(target_ball.astype(int)), 10, Colors.GREEN, 2)
+                    cv2.circle(board_im, tuple(target_ball.astype(int)), 10, Colors.GREEN, 2)
 
                     # draw the path
                     path, ball_hit = simulate.generate_path(target_ball, non_target_balls,
@@ -188,8 +192,17 @@ class GamePhase(Phase):
                         arrow_end = arrow_start + hit_direction * 70
                         cv2.arrowedLine(board_im, tuple(arrow_start.astype(int)),
                                         tuple(arrow_end.astype(int)), Colors.GREEN, 7)
-                for ball in balls:
-                    cv2.circle(board_im, tuple(ball.astype(int)), 23, Colors.GREEN, 15)
+            for ball in balls:
+                cv2.circle(board_im, tuple(ball.astype(int)), REAL_BALL_RADIUS_PIXELS, Colors.GREEN, 15)
+
+            if SHOW_HOLES:
+                holes = [(0, 0), (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR), (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, 0),
+                         (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR),
+                         (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR / 2),
+                         (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR / 2)]
+                for hole in holes:
+                    hole_int = tuple(np.int32(hole))
+                    cv2.circle(board_im, hole_int, HOLE_RADIUS, Colors.GREEN, -1)
 
             with self.__real_board_img_lock:
                 self.__real_board_img = cropped_board

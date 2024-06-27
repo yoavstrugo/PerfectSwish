@@ -21,9 +21,8 @@ class PerfectSwishApp(tk.Tk):
         self.__frames: list[tuple[tk.Frame, tk.Toplevel | None]] = []
         self.__cached_data = None
         self.load_data()
-        # self._webcam_capture = webcam.WebcamCapture(
-        #     r'C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\object_detection\detect_objects_test_images\full_balls_no_green.mp4', 1920, 1080, 15)
         self._webcam_capture = webcam.WebcamCapture(CAMERA, 1920, 1080, 15)
+        # self._webcam_capture = webcam.WebcamCapture(CAMERA, 1920, 1080, 15)
         self.resizable(False, False)
 
         self._phase = None
