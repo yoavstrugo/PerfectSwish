@@ -3,12 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from perfectswish.object_detection.detect_cuestick import CuestickDetector
+from perfectswish.utils import webcam
 from perfectswish.utils.frame_buffer import FrameBuffer
 from perfectswish.utils.utils import Colors, show_im
 from perfectswish.image_transformation.image_processing import transform_board
 
 from time import time
 
+from copy import deepcopy
 
 def timer_func(func):
     # This function shows the execution time of
@@ -23,8 +25,8 @@ def timer_func(func):
     return wrap_func
 
 
-black_ball_temp = cv2.imread(r"perfectswish\object_detection\balls_for_template_matching\black_ball_color_template.jpg")
-white_ball_temp = cv2.imread(r"perfectswish\object_detection\balls_for_template_matching\white_ball_color_template.jpg")
+black_ball_temp = cv2.imread(r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\object_detection\balls_for_template_matching\black_ball_color_template.jpg")
+white_ball_temp = cv2.imread(r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\object_detection\balls_for_template_matching\white_ball_color_template.jpg")
 
 
 def draw_circles(image, circles):
@@ -251,12 +253,15 @@ class BallDetector:
         circles = self.change_circles_format(circles)
 
         # find the black ball seperately:
-        white_ball = find_white_ball(image, white_ball_temp)
-        if white_ball is not None:
-            circles = np.vstack([circles, white_ball])
-        black_ball = find_black_ball(image, black_ball_temp)
-        if black_ball is not None:
-            circles = np.vstack([circles, black_ball])
+        try:
+            white_ball = find_white_ball(image, white_ball_temp)
+            if white_ball is not None:
+                circles = np.vstack([circles, white_ball])
+            black_ball = find_black_ball(image, black_ball_temp)
+            if black_ball is not None:
+                circles = np.vstack([circles, black_ball])
+        except:
+            pass
 
         circles = np.unique(circles, axis=0)
         self.balls_buffer.add_balls(circles)
@@ -269,8 +274,7 @@ class BallDetector:
 
 
 if __name__ == '__main__':
-    # load the video
-    cap = cv2.VideoCapture("detect_objects_test_images/new_test_video.mp4")
+    cap = cv2.VideoCapture((r"C:\Users\TLP-299\Pictures\Camera Roll\newest_test_video.mp4"))
     rect = [(36, 931), (60, 79), (1754, 108), (1735, 970)]
 
     balls_finder = BallDetector(3, 4, buffer_size=10)
@@ -294,15 +298,31 @@ if __name__ == '__main__':
         cv2.circle(image, black_ball, 30, (0, 0, 0), 3)
         cv2.circle(image, white_ball, 30, (255, 255, 255), 3)
 
-        print(f"new frame {i}")
-        # resize
-        image = cv2.resize(image, (400, 800))
-        cv2.imshow("balls", image)
+        # show all steps using the function
+        # copy the cropped frame
+        copied_frame = copy.deepcopy(cropped_image)
+
+        if cv2.waitKey(1) & 0xFF == ord('d'):
+            show_im(draw_intermediate_images(bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK)),
+                                             canny_edge_detection(bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK))),
+                                             copied_frame, remove_green(cropped_image, new_color=Colors.BLACK)))
+        else:
+            resized_image = cv2.resize(image, (800, 600))
+            cv2.imshow("balls", resized_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
-#
+
+# if __name__ == '__main__':
+#     # load first_frame.jpg
+#     frame = cv2.imread("first_frame.jpg")
+#     from copy import deepcopy
+#     frame_copy = deepcopy(frame)
+#     show_im(draw_intermediate_images(bilateral_filter(remove_green(frame, new_color=Colors.BLACK)),
+#                                         canny_edge_detection(bilateral_filter(remove_green(frame, new_color=Colors.BLACK))),
+#                                         frame_copy, remove_green(frame, new_color=Colors.BLACK)))
+#     cv2.waitKey(0)
 #
 # if __name__ == '__main__':
 #
