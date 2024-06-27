@@ -36,6 +36,21 @@ def save_aruco_markers(n=10, filename="markers"):
     plt.savefig(filename + ".png")
 
 
+class CueStickBuffer:
+    def __init__(self, buffer_size=10):
+        self.buffer_size = buffer_size
+        self.shape = (1800, 900)
+        self.balls_images_queue = np.zeros((1800, 900, buffer_size),
+                                           dtype=np.uint8)  # the dimensions dont matter here if its larger than the image
+
+    def __add_gaussian(self, cues_frame: np.array, cue):
+        pass
+
+
+
+
+
+
 class CuestickDetector:
     def __init__(self, fiducial_to_stickend_ratio=4 / 9, back_fiducial_id=8, front_fiducial_id=9):
         self.marker_dict = marker_dict
