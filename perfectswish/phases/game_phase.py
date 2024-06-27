@@ -142,6 +142,10 @@ class GamePhase(Phase):
         """
         This will continously generate the output image.
         """
+        last_stickend = []
+        last_back_fiducial_center = []
+        last_front_fiducial_center = []
+        STICKEND_VALUE = 15
         while not self.__stop_event.is_set():
             webcam_image = self.__cap.get_latest_image()
             if not self.__crop_rect:
@@ -154,6 +158,20 @@ class GamePhase(Phase):
                                                                                                  front_fiducial_center)
             # self.__cue_detector.back_fiducial_center_coords = back_fiducial_center
             # self.__cue_detector.front_fiducial_center_coords = front_fiducial_center
+            if len(last_stickend) < STICKEND_VALUE:
+                last_stickend.append(stickend)
+                last_back_fiducial_center.append(back_fiducial_center)
+                last_front_fiducial_center.append(front_fiducial_center)
+            else:
+                last_stickend.pop(0)
+                last_stickend.append(stickend)
+                last_back_fiducial_center.pop(0)
+                last_back_fiducial_center.append(back_fiducial_center)
+                last_front_fiducial_center.pop(0)
+                last_front_fiducial_center.append(front_fiducial_center)
+            stickend = np.mean(last_stickend, axis=0)
+            back_fiducial_center = np.mean(last_back_fiducial_center, axis=0)
+            front_fiducial_center = np.mean(last_front_fiducial_center, axis=0)
             cuestick_exist = all([stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
             balls = self.__read_balls()
             board_im = draw_board(

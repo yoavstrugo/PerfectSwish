@@ -31,7 +31,7 @@ class LogoPhase(Phase):
         super().__init__("logo")
         self.__next_func = next_func
 
-        self.__image = cv2.imread(logo_path)
+        self.__image = cv2.cvtColor(cv2.imread(logo_path), cv2.COLOR_BGR2RGB)
         self.__stop_flag = False
 
         self.__top_lvl = DisplayApp(other_screen)
