@@ -23,8 +23,8 @@ def timer_func(func):
     return wrap_func
 
 
-black_ball_temp = cv2.imread(r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\object_detection\balls_for_template_matching\black_ball_color_template.jpg")
-white_ball_temp = cv2.imread(r"C:\Users\TLP-299\PycharmProjects\PerfectSwish\perfectswish\object_detection\balls_for_template_matching\white_ball_color_template.jpg")
+black_ball_temp = cv2.imread(r"perfectswish\object_detection\balls_for_template_matching\black_ball_color_template.jpg")
+white_ball_temp = cv2.imread(r"perfectswish\object_detection\balls_for_template_matching\white_ball_color_template.jpg")
 
 
 def draw_circles(image, circles):
@@ -192,6 +192,7 @@ class BallBuffer:
         balls_frame = cv2.addWeighted(balls_frame, 1, gaussian, 1, 0)
         return balls_frame
 
+    @timer_func
     def add_balls(self, balls):
         balls_frame = np.zeros(self.shape, dtype=np.uint8)
         for ball in balls:
@@ -216,6 +217,7 @@ class BallBuffer:
             return np.array([])
         return np.array(list(zip(local_maximums[1], local_maximums[0])))
 
+    @timer_func
     def get_likely_balls(self):
         sum_of_frames = np.average(self.balls_images_queue, axis=2)
         # get the local maximas
@@ -250,8 +252,11 @@ class BallDetector:
 
         # find the black ball seperately:
         white_ball = find_white_ball(image, white_ball_temp)
+        if white_ball is not None:
+            circles = np.vstack([circles, white_ball])
         black_ball = find_black_ball(image, black_ball_temp)
-        circles = np.vstack([circles, white_ball, black_ball])
+        if black_ball is not None:
+            circles = np.vstack([circles, black_ball])
 
         circles = np.unique(circles, axis=0)
         self.balls_buffer.add_balls(circles)
@@ -265,12 +270,11 @@ class BallDetector:
 
 if __name__ == '__main__':
     # load the video
-    cap = cv2.VideoCapture("detect_objects_test_images/fiducials_2.mp4")
+    cap = cv2.VideoCapture("detect_objects_test_images/new_test_video.mp4")
     rect = [(36, 931), (60, 79), (1754, 108), (1735, 970)]
 
     balls_finder = BallDetector(3, 4, buffer_size=10)
-    for i in range(70):
-        ret, frame = cap.read()
+    ret, frame = cap.read()
     # save this frame
     for i in range(500):
         ret, frame = cap.read()
