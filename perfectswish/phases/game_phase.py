@@ -170,7 +170,7 @@ class GamePhase(Phase):
                 if target_ball is not None:
                     non_target_balls = [ball for ball in balls if not np.array_equal(ball, target_ball)]
                     # draw the target ball with a point
-                    cv2.circle(board_im, tuple(target_ball.astype(int)), 10, Colors.GREEN, 2)
+                    # cv2.circle(board_im, tuple(target_ball.astype(int)), 10, Colors.GREEN, 2)
 
                     # draw the path
                     path, ball_hit = simulate.generate_path(target_ball, non_target_balls,
@@ -179,7 +179,7 @@ class GamePhase(Phase):
 
                     for i in range(len(path) - 1):
                         cv2.line(board_im, tuple(path[i].astype(int)), tuple(path[i + 1].astype(int)),
-                                 Colors.RED, 2)
+                                 Colors.GREEN, 2)
 
                     # draw the expected hit
                     if ball_hit is not None:
@@ -187,7 +187,9 @@ class GamePhase(Phase):
                         arrow_start = ball_hit.hit_point
                         arrow_end = arrow_start + hit_direction * 70
                         cv2.arrowedLine(board_im, tuple(arrow_start.astype(int)),
-                                        tuple(arrow_end.astype(int)), Colors.RED, 7)
+                                        tuple(arrow_end.astype(int)), Colors.GREEN, 7)
+                for ball in balls:
+                    cv2.circle(board_im, tuple(ball.astype(int)), 23, Colors.GREEN, 15)
 
             with self.__real_board_img_lock:
                 self.__real_board_img = cropped_board
@@ -235,7 +237,7 @@ def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, up
     """
     The ball update process entry point, will run at rate of update_rate
     """
-    balls_detector = BallDetector(back_fiducial_id=BACK_FIDUCIAL_ID, front_fiducial_id=FRONT_FIDUCIAL_ID)
+    balls_detector = BallDetector(back_fiducial_id=BACK_FIDUCIAL_ID, front_fiducial_id=FRONT_FIDUCIAL_ID, buffer_size=10)
     while not stop_event.is_set():
         frame = cap.get_latest_image()
         cropped = transform_board(frame, crop_rect)
