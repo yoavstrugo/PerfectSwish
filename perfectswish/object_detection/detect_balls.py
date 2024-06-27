@@ -7,10 +7,25 @@ from perfectswish.utils.frame_buffer import FrameBuffer
 from perfectswish.utils.utils import Colors, show_im
 from perfectswish.image_transformation.image_processing import transform_board
 
-black_ball_temp = cv2.imread("perfectswish/object_detection/balls_for_template_matching/black_ball_color_template.jpg")
-white_ball_temp = cv2.imread("perfectswish/object_detection/balls_for_template_matching/white_ball_color_template.jpg")
+black_ball_temp = cv2.imread("balls_for_template_matching/black_ball_color_template.jpg")
+white_ball_temp = cv2.imread("balls_for_template_matching/white_ball_color_template.jpg")
 
-i = 0 # for debugging
+def timer_func(func):
+    # This function shows the execution time of
+    # the function object passed
+    def wrap_func(*args, **kwargs):
+        t1 = time()
+        result = func(*args, **kwargs)
+        t2 = time()
+        print(f'Function {func.__name__!r} executed in {(t2 - t1):.4f}s')
+        return result
+
+    return wrap_func
+
+
+black_ball_temp = cv2.imread(r"perfectswish\object_detection\balls_for_template_matching\black_ball_color_template.jpg")
+white_ball_temp = cv2.imread(r"perfectswish\object_detection\balls_for_template_matching\white_ball_color_template.jpg")
+
 
 def draw_circles(image, circles):
     if circles is not None:
@@ -35,8 +50,7 @@ def remove_fiducials(image, back_fiducial_id, front_fiducial_id):
 import copy
 
 
-def remove_green(_image, new_color=Colors.BLACK):
-    image = copy.deepcopy(_image)
+def remove_green(image, new_color=Colors.BLACK):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     lower_green = np.array([35, 0, 0])
     upper_green = np.array([90, 255, 255])
@@ -164,22 +178,23 @@ class BallBuffer:
     # take local maximas of the buffers sum to get the most probable location of the balls
     def __init__(self, buffer_size):
         self.buffer_size = buffer_size
-        self.balls_images_queue = np.zeros((2000, 2000, buffer_size),
+        self.shape = (1800, 900)
+        self.balls_images_queue = np.zeros((1800, 900, buffer_size),
                                            dtype=np.uint8)  # the dimensions dont matter here if its larger than the image
-
 
     def __add_gaussian(self, balls_frame: np.array, ball, radius=31):
         x, y = ball
         blank_image = np.zeros_like(balls_frame)
         cv2.circle(blank_image, (x, y), 3, 255, -1)
-        gaussian = cv2.GaussianBlur(blank_image, (radius, radius), sigmaX = 0)
+        gaussian = cv2.GaussianBlur(blank_image, (radius, radius), sigmaX=0)
 
         # add the gaussian to the frame
         balls_frame = cv2.addWeighted(balls_frame, 1, gaussian, 1, 0)
         return balls_frame
 
+    @timer_func
     def add_balls(self, balls):
-        balls_frame = np.zeros((2000, 2000), dtype=np.uint8)
+        balls_frame = np.zeros(self.shape, dtype=np.uint8)
         for ball in balls:
             balls_frame = self.__add_gaussian(balls_frame, ball)
 
@@ -188,9 +203,8 @@ class BallBuffer:
         self.balls_images_queue[:, :, -1] = balls_frame
 
     def __get_maximas(self, image):
-        global i
-        i += 1
-        mask = np.where(image > 30, 1, 0) # thresholded at 30
+
+        mask = np.where(image > 30, 1, 0)  # thresholded at 30
         image = image * mask
 
         # gaussian filter the image
@@ -203,6 +217,7 @@ class BallBuffer:
             return np.array([])
         return np.array(list(zip(local_maximums[1], local_maximums[0])))
 
+    @timer_func
     def get_likely_balls(self):
         sum_of_frames = np.average(self.balls_images_queue, axis=2)
         # get the local maximas
@@ -218,7 +233,9 @@ class BallDetector:
                                                   front_fiducial_id=front_fiducial_id)
         self.balls_buffer = BallBuffer(buffer_size)
 
+    @timer_func
     def detect_balls(self, image):
+
         # remove the fiducials
         image = remove_fiducials(image, self.fiducial_detector.back_fiducial_id,
                                  self.fiducial_detector.front_fiducial_id)
@@ -231,17 +248,24 @@ class BallDetector:
         # Apply hough circles
         circles = hough_circles(canny_, 15, 30, 20, 50, 30)
 
-        if circles is not None:
-            circles = np.int32(circles[0, :][:, :2])
+        circles = self.change_circles_format(circles)
 
         # find the black ball seperately:
         white_ball = find_white_ball(image, white_ball_temp)
+        if white_ball is not None:
+            circles = np.vstack([circles, white_ball])
         black_ball = find_black_ball(image, black_ball_temp)
-        circles = np.vstack([circles, white_ball, black_ball])
+        if black_ball is not None:
+            circles = np.vstack([circles, black_ball])
 
         circles = np.unique(circles, axis=0)
         self.balls_buffer.add_balls(circles)
         return self.balls_buffer.get_likely_balls()
+
+    def change_circles_format(self, circles):
+        if circles is not None:
+            circles = np.int32(circles[0, :][:, :2])
+        return circles
 
 
 if __name__ == '__main__':

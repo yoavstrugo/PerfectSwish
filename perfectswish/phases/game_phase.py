@@ -18,6 +18,7 @@ from perfectswish.object_detection.detect_balls import draw_circles, find_balls,
 from perfectswish.object_detection.detect_cuestick import CuestickDetector
 from perfectswish.settings import BOARD_BASE_HEIGHT, BOARD_BASE_WIDTH, BOARD_SIZE, RESOLUTION_FACTOR
 from perfectswish.simulation import simulate
+from perfectswish.simulation.simulate import normalize
 from perfectswish.utils.utils import Colors
 from perfectswish.utils.webcam import MultiprocessWebcamCapture
 from perfectswish.visualization.visualize import draw_board
@@ -137,9 +138,6 @@ class GamePhase(Phase):
         with self.__output_image_lock:
             self.__next_image = im
 
-
-
-
     def __generate_output_image(self) -> NoReturn:
         """
         This will continously generate the output image.
@@ -177,8 +175,7 @@ class GamePhase(Phase):
                 # draw_circles(board_im, balls)
                 draw_circles(cropped_board, balls)
 
-            if cuestick_exist: # TODO: uncomment this before push
-                print("cuestick exist", stickend, back_fiducial_center, front_fiducial_center)
+            if cuestick_exist:
                 self.__cue_detector.draw_cuestick(board_im)
                 self.__cue_detector.draw_cuestick(cropped_board)
 
@@ -191,9 +188,9 @@ class GamePhase(Phase):
                 if target_ball is not None:
                     non_target_balls = [ball for ball in balls if not np.array_equal(ball, target_ball)]
                     # draw the target ball with a point
-                    # cv2.circle(board_im, tuple(target_ball.astype(int)), 23, Colors.GREEN, -1)
+                    cv2.circle(board_im, tuple(target_ball.astype(int)), 10, Colors.GREEN, 2)
 
-                    # draw the path TODO: uncomment this before push
+                    # draw the path
                     path, ball_hit = simulate.generate_path(target_ball, non_target_balls,
                                                             front_fiducial_center - back_fiducial_center,
                                                             Board(*BOARD_SIZE), 5)
@@ -204,11 +201,15 @@ class GamePhase(Phase):
 
                     # draw the expected hit
                     if ball_hit is not None:
-                        cv2.arrowedLine(board_im, tuple(ball_hit.white_ball_pos.astype(int)),
-                                        tuple(ball_hit.hit_point.astype(int)), Colors.GREEN, 2)
+                        hit_direction = normalize(ball_hit.hit_point - ball_hit.white_ball_pos)
+                        arrow_start = ball_hit.hit_point
+                        arrow_end = arrow_start + hit_direction * 70
+                        cv2.arrowedLine(board_im, tuple(arrow_start.astype(int)),
+                                        tuple(arrow_end.astype(int)), Colors.GREEN, 7)
 
 
-            # I want to draw the hles on the projection holes
+
+        # I want to draw the hles on the projection holes
             holes = [(0, 0), (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR), (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, 0),
                      (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR),
                      (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR / 2),
