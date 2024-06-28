@@ -254,13 +254,13 @@ class BallDetector:
     @timer_func
     def detect_balls(self, image):
 
+        # remove the fiducials
+        image = self.remove_fiducials(image)
+
         # find the black and white ball seperately:
         white_ball = find_white_ball(image, white_ball_temp)
         black_ball = find_black_ball(image, black_ball_temp)
 
-
-        # remove the fiducials
-        image = self.remove_fiducials(image)
         # Remove green from the image
         no_green_ = remove_green(image, new_color=Colors.GREEN)
         # Apply bilateral filter

@@ -159,7 +159,7 @@ class GamePhase(Phase):
         max_key = np.array(max_key)
         return max_key
 
-    def __generate_output_image(self, SHOW_HOLES = False) -> NoReturn:
+    def __generate_output_image(self, SHOW_HOLES=False) -> NoReturn:
         """
         This will continously generate the output image.
         """
@@ -171,7 +171,8 @@ class GamePhase(Phase):
             webcam_image = self.__cap.get_latest_image()
             if not self.__crop_rect:
                 raise ValueError("Crop rect not set")
-            stickend, back_fiducial_center, front_fiducial_center, marker_corners, marker_IDs = self.__cue_detector.detect_cuestick(webcam_image, debug=True)
+            stickend, back_fiducial_center, front_fiducial_center, marker_corners, marker_IDs = self.__cue_detector.detect_cuestick(
+                webcam_image, debug=True)
             cropped_board, stickend, back_fiducial_center, front_fiducial_center = transform_cue(webcam_image,
                                                                                                  self.__crop_rect,
                                                                                                  stickend,
@@ -202,7 +203,6 @@ class GamePhase(Phase):
             back_fiducial_center_max = self.__find_max(tuple(last_back_fiducial_center))
             front_fiducial_center_max = self.__find_max(tuple(last_front_fiducial_center))
 
-
             if AVERAGE:
                 stickend = stickend_ave
                 back_fiducial_center = back_fiducial_center_ave
@@ -212,7 +212,8 @@ class GamePhase(Phase):
                 back_fiducial_center = back_fiducial_center_max
                 front_fiducial_center = front_fiducial_center_max
 
-            cuestick_exist = all([stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
+            cuestick_exist = all(
+                [stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
             balls = self.__read_balls()
             board_im = draw_board(
                 Board(width=BOARD_BASE_WIDTH * RESOLUTION_FACTOR,
@@ -243,6 +244,11 @@ class GamePhase(Phase):
 
                     # draw the expected hit
                     if ball_hit is not None:
+                        # draw the ball's collision shadow
+                        cv2.circle(board_im, tuple(ball_hit.hit_point.astype(int)), REAL_BALL_RADIUS_PIXELS,
+                                   Colors.WHITE, 4)
+
+                        # draw the hit direction
                         hit_direction = normalize(ball_hit.hit_point - ball_hit.white_ball_pos)
                         arrow_start = ball_hit.hit_point + hit_direction * 2 * REAL_BALL_RADIUS_PIXELS
                         arrow_end = arrow_start + hit_direction * 250
@@ -307,7 +313,8 @@ def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, up
     """
     The ball update process entry point, will run at rate of update_rate
     """
-    balls_detector = BallDetector(back_fiducial_id=BACK_FIDUCIAL_ID, front_fiducial_id=FRONT_FIDUCIAL_ID, buffer_size=10)
+    balls_detector = BallDetector(back_fiducial_id=BACK_FIDUCIAL_ID, front_fiducial_id=FRONT_FIDUCIAL_ID,
+                                  buffer_size=10)
     while not stop_event.is_set():
         frame = cap.get_latest_image()
         cropped = transform_board(frame, crop_rect)
@@ -323,13 +330,14 @@ def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, up
         time.sleep(1 / update_rate)
 
 
-def trapez(y,y0,w):
-    return np.clip(np.minimum(y+1+w/2-y0, -y+1+w/2+y0),0,1)
+def trapez(y, y0, w):
+    return np.clip(np.minimum(y + 1 + w / 2 - y0, -y + 1 + w / 2 + y0), 0, 1)
 
-def weighted_line(r0, c0, r1, c1, w, rmin=0, rmax=np.inf):
+
+def weighted_line(r0, c0, r1, c1, w, rmin=0, rmax=np.inf, negative_order=False):
     # The algorithm below works fine if c1 >= c0 and c1-c0 >= abs(r1-r0).
     # If either of these cases are violated, do some switches.
-    if abs(c1-c0) < abs(r1-r0):
+    if abs(c1 - c0) < abs(r1 - r0):
         # Switch x and y, and switch again when returning.
         xx, yy, val = weighted_line(c0, r0, c1, r1, w, rmin=rmin, rmax=rmax)
         return (yy, xx, val)
@@ -337,25 +345,25 @@ def weighted_line(r0, c0, r1, c1, w, rmin=0, rmax=np.inf):
     # At this point we know that the distance in columns (x) is greater
     # than that in rows (y). Possibly one more switch if c0 > c1.
     if c0 > c1:
-        return weighted_line(r1, c1, r0, c0, w, rmin=rmin, rmax=rmax)
+        return weighted_line(r1, c1, r0, c0, w, rmin=rmin, rmax=rmax, negative_order=True)
 
     # The following is now always < 1 in abs
-    slope = (r1-r0) / (c1-c0)
+    slope = (r1 - r0) / (c1 - c0)
 
     # Adjust weight by the slope
-    w *= np.sqrt(1+np.abs(slope)) / 2
+    w *= np.sqrt(1 + np.abs(slope)) / 2
 
     # We write y as a function of x, because the slope is always <= 1
     # (in absolute value)
-    x = np.arange(c0, c1+1, dtype=float)
-    y = x * slope + (c1*r0-c0*r1) / (c1-c0)
+    x = np.arange(c0, c1 + 1, dtype=float)
+    y = x * slope + (c1 * r0 - c0 * r1) / (c1 - c0)
 
     # Now instead of 2 values for y, we have 2*np.ceil(w/2).
     # All values are 1 except the upmost and bottommost.
-    thickness = np.ceil(w/2)
-    yy = (np.floor(y).reshape(-1,1) + np.arange(-thickness-1,thickness+2).reshape(1,-1))
+    thickness = np.ceil(w / 2)
+    yy = (np.floor(y).reshape(-1, 1) + np.arange(-thickness - 1, thickness + 2).reshape(1, -1))
     xx = np.repeat(x, yy.shape[1])
-    vals = trapez(yy, y.reshape(-1,1), w).flatten()
+    vals = trapez(yy, y.reshape(-1, 1), w).flatten()
 
     yy = yy.flatten()
 
@@ -363,16 +371,43 @@ def weighted_line(r0, c0, r1, c1, w, rmin=0, rmax=np.inf):
     # to avoid parts outside of the picture
     mask = np.logical_and.reduce((yy >= rmin, yy < rmax, vals > 0))
 
+    if negative_order:
+        reverse_yy = yy[::-1]
+        reverse_xx = xx[::-1]
+        reverse_vals = vals[::-1]
+        return (reverse_yy[mask].astype(int), reverse_xx[mask].astype(int), reverse_vals[mask])
     return (yy[mask].astype(int), xx[mask].astype(int), vals[mask])
 
+
 def draw_path(board_im, path):
-    for i in range(len(path)-1):
-        rr, cc, val = weighted_line(path[i][1], path[i][0], path[i+1][1], path[i+1][0], 5)
-        for r, c, v in zip(rr, cc, val):
+    # choose length of the path until it goes red
+    total_length = BOARD_BASE_HEIGHT * RESOLUTION_FACTOR * 1.5  # 3 is the number of wall bounces before the path goes red
+    # Initialize cumulative length
+    cumulative_length = 0
+
+    for i in range(len(path) - 1):
+        # Calculate line coordinates and anti-aliasing weights
+        rr, cc, val = weighted_line(path[i][1], path[i][0], path[i + 1][1], path[i + 1][0], 5)
+
+        # Calculate length of the current segment
+        segment_length = np.linalg.norm(np.array(path[i + 1]) - np.array(path[i]))
+
+        # Calculate color gradient for each point on the line
+        color_gradient = np.linspace(cumulative_length / total_length,
+                                     (cumulative_length + segment_length) / total_length, len(rr))
+
+        # Update cumulative length
+        cumulative_length += segment_length
+
+        if cumulative_length > total_length:
+            return
+
+        for r, c, v, cg in zip(rr, cc, val, color_gradient):
             if 0 <= r < board_im.shape[0] and 0 <= c < board_im.shape[1]:
-                board_im[r, c] = (1 - v) * board_im[r, c] + v * np.array(Colors.GREEN)
-        if np.linalg.norm(np.array(path[i+1]) - np.array(path[i])) > 3 * BOARD_BASE_HEIGHT * RESOLUTION_FACTOR:
-            break
-    return
-
-
+                if cg < 0.5:
+                    # Transition from green to yellow in the first half of the path
+                    color = (1 - 2 * cg) * np.array(Colors.GREEN) + 2 * cg * np.array(Colors.AQUA)
+                else:
+                    # Transition from yellow to red in the second half of the path
+                    color = (2 - 2 * cg) * np.array(Colors.AQUA) + (2 * cg - 1) * np.array(Colors.BLUE)
+                board_im[r, c] = (1 - v) * board_im[r, c] + v * color
