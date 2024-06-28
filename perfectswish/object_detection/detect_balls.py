@@ -10,6 +10,7 @@ from perfectswish.utils.frame_buffer import FrameBuffer
 from perfectswish.utils.utils import Colors, show_im
 from perfectswish.image_transformation.image_processing import transform_board
 
+
 def timer_func(func):
     # This function shows the execution time of
     # the function object passed
@@ -24,7 +25,8 @@ def timer_func(func):
 
 
 black_ball_temp = cv2.imread(r"perfectswish/object_detection/balls_for_template_matching/black_ball_color_template.jpg")
-secondary_black_ball_temp = cv2.imread(r"perfectswish/object_detection/balls_for_template_matching/secondary_black_ball_color_template.jpg")
+secondary_black_ball_temp = cv2.imread(
+    r"perfectswish/object_detection/balls_for_template_matching/secondary_black_ball_color_template.jpg")
 white_ball_temp = cv2.imread(r"perfectswish/object_detection/balls_for_template_matching/white_ball_color_template.jpg")
 
 
@@ -153,7 +155,8 @@ def gamma_correction(image, gamma=1.0):
     return cv2.LUT(image, table)
 
 
-def find_black_ball(image, black_ball_template=black_ball_temp, secondary_black_ball_template=secondary_black_ball_temp):
+def find_black_ball(image, black_ball_template=black_ball_temp,
+                    secondary_black_ball_template=secondary_black_ball_temp):
     res = cv2.matchTemplate(image, black_ball_template, cv2.TM_CCOEFF_NORMED)
     # theres only one black ball in the image so we can just take the max value
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
@@ -165,7 +168,6 @@ def find_black_ball(image, black_ball_template=black_ball_temp, secondary_black_
     # correct the max location
     max_loc = (max_loc[0] + black_ball_template.shape[1] // 2, max_loc[1] + black_ball_template.shape[0] // 2)
     # draw a circle around the black ball
-    cv2.circle(image, max_loc, 30, (0, 255, 0), 3)
     return max_loc
 
 
@@ -248,8 +250,14 @@ class BallDetector:
             cv2.circle(image_copy, tuple(np.int32(front_fiducial_center)), 70, (150, 200, 100), -1)
             return image_copy
         return image
+
     @timer_func
     def detect_balls(self, image):
+
+        # find the black and white ball seperately:
+        white_ball = find_white_ball(image, white_ball_temp)
+        black_ball = find_black_ball(image, black_ball_temp)
+
 
         # remove the fiducials
         image = self.remove_fiducials(image)
@@ -264,14 +272,9 @@ class BallDetector:
 
         circles = self.change_circles_format(circles)
 
-        # find the black ball seperately:
         try:
-            white_ball = find_white_ball(image, white_ball_temp)
-            if white_ball is not None:
-                circles = np.vstack([circles, white_ball])
-            black_ball = find_black_ball(image, black_ball_temp)
-            if black_ball is not None:
-                circles = np.vstack([circles, black_ball])
+            circles = np.vstack([circles, white_ball])
+            circles = np.vstack([circles, black_ball])
         except:
             pass
         # if circles is not empty:
@@ -325,7 +328,8 @@ if __name__ == '__main__':
             intermediates = draw_intermediate_images(
                 bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK)),
                 canny_edge_detection(bilateral_filter(remove_green(cropped_image, new_color=Colors.BLACK))),
-                remove_fiducials(cropped_copy, 3, 4), remove_green(remove_fiducials(cropped_copy, 3, 4), new_color=Colors.GREEN))
+                remove_fiducials(cropped_copy, 3, 4),
+                remove_green(remove_fiducials(cropped_copy, 3, 4), new_color=Colors.GREEN))
             show_im(intermediates)
             continue
 

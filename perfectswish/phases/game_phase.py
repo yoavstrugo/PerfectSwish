@@ -371,10 +371,9 @@ def weighted_line(r0, c0, r1, c1, w, rmin=0, rmax=np.inf):
 
     return (yy[mask].astype(int), xx[mask].astype(int), vals[mask])
 
-def \
-        draw_path(board_im, path):
+def draw_path(board_im, path):
     # choose length of the path until it goes red
-    total_length = 1000
+    total_length = BOARD_BASE_HEIGHT * RESOLUTION_FACTOR * 3 # 3 is the number of wall bounces before the path goes red
     # Initialize cumulative length
     cumulative_length = 0
 
@@ -391,14 +390,16 @@ def \
 
         # Update cumulative length
         cumulative_length += segment_length
-        cumulative_length = 1000 if cumulative_length > 1000 else cumulative_length
+
+        if cumulative_length > total_length:
+            return
 
         for r, c, v, cg in zip(rr, cc, val, color_gradient):
             if 0 <= r < board_im.shape[0] and 0 <= c < board_im.shape[1]:
                 if cg < 0.5:
                     # Transition from green to yellow in the first half of the path
-                    color = (1 - 2 * cg) * np.array(Colors.GREEN) + 2 * cg * np.array(Colors.YELLOW)
+                    color = (1 - 2 * cg) * np.array(Colors.GREEN) + 2 * cg * np.array(Colors.AQUA)
                 else:
                     # Transition from yellow to red in the second half of the path
-                    color = (2 - 2 * cg) * np.array(Colors.YELLOW) + (2 * cg - 1) * np.array(Colors.RED)
+                    color = (2 - 2 * cg) * np.array(Colors.AQUA) + (2 * cg - 1) * np.array(Colors.BLUE)
                 board_im[r, c] = (1 - v) * board_im[r, c] + v * color
