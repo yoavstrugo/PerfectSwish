@@ -212,7 +212,7 @@ class BallBuffer:
 
     def __get_maximas(self, image):
 
-        mask = np.where(image > 30, 1, 0)  # thresholded at 30
+        mask = np.where(image > 25, 1, 0)  # thresholded at 30
         image = image * mask
 
         # gaussian filter the image

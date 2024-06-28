@@ -195,22 +195,23 @@ class GamePhase(Phase):
                 last_front_fiducial_center.append(front_fiducial_center)
 
             # average
-            stickend_ave = np.mean(last_stickend, axis=0)
-            back_fiducial_center_ave = np.mean(last_back_fiducial_center, axis=0)
-            front_fiducial_center_ave = np.mean(last_front_fiducial_center, axis=0)
+            if last_stickend and last_stickend[0] is not None:
+                stickend_ave = np.mean(last_stickend, axis=0)
+                back_fiducial_center_ave = np.mean(last_back_fiducial_center, axis=0)
+                front_fiducial_center_ave = np.mean(last_front_fiducial_center, axis=0)
 
-            stickend_max = self.__find_max(tuple(last_stickend))
-            back_fiducial_center_max = self.__find_max(tuple(last_back_fiducial_center))
-            front_fiducial_center_max = self.__find_max(tuple(last_front_fiducial_center))
+                stickend_max = self.__find_max(tuple(last_stickend))
+                back_fiducial_center_max = self.__find_max(tuple(last_back_fiducial_center))
+                front_fiducial_center_max = self.__find_max(tuple(last_front_fiducial_center))
 
-            if AVERAGE:
-                stickend = stickend_ave
-                back_fiducial_center = back_fiducial_center_ave
-                front_fiducial_center = front_fiducial_center_ave
-            else:
-                stickend = stickend_max
-                back_fiducial_center = back_fiducial_center_max
-                front_fiducial_center = front_fiducial_center_max
+                if AVERAGE:
+                    stickend = stickend_ave
+                    back_fiducial_center = back_fiducial_center_ave
+                    front_fiducial_center = front_fiducial_center_ave
+                else:
+                    stickend = stickend_max
+                    back_fiducial_center = back_fiducial_center_max
+                    front_fiducial_center = front_fiducial_center_max
 
             cuestick_exist = all(
                 [stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
@@ -256,7 +257,7 @@ class GamePhase(Phase):
                                         tuple(arrow_end.astype(int)), Colors.GREEN, 7)
 
             for ball in balls:
-                cv2.circle(board_im, tuple(ball.astype(int)), REAL_BALL_RADIUS_PIXELS - 5, Colors.SOFT_GREEN, 10)
+                cv2.circle(board_im, tuple(ball.astype(int)), REAL_BALL_RADIUS_PIXELS + 10, Colors.GREEN, 3)
 
             if SHOW_HOLES:
                 holes = [(0, 0), (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR), (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, 0),
@@ -381,7 +382,7 @@ def weighted_line(r0, c0, r1, c1, w, rmin=0, rmax=np.inf, negative_order=False):
 
 def draw_path(board_im, path):
     # choose length of the path until it goes red
-    total_length = BOARD_BASE_HEIGHT * RESOLUTION_FACTOR * 1.5  # 3 is the number of wall bounces before the path goes red
+    total_length = BOARD_BASE_HEIGHT * RESOLUTION_FACTOR   # 3 is the number of wall bounces before the path goes red
     # Initialize cumulative length
     cumulative_length = 0
 
