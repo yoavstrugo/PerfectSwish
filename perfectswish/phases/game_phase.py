@@ -3,6 +3,9 @@ import threading
 import time
 from multiprocessing import Manager, Process
 from typing import NoReturn
+
+from skimage.draw import draw
+
 from perfectswish.settings import HOLE_RADIUS
 import cv2
 import numpy as np
@@ -241,11 +244,9 @@ class GamePhase(Phase):
                     # draw the path
                     path, ball_hit = simulate.generate_path(target_ball, non_target_balls,
                                                             front_fiducial_center - back_fiducial_center,
-                                                            Board(*BOARD_SIZE), 5)
+                                                            Board(*BOARD_SIZE), 4)
 
-                    for i in range(len(path) - 1):
-                        cv2.line(board_im, tuple(path[i].astype(int)), tuple(path[i + 1].astype(int)),
-                                 Colors.GREEN, 2)
+                    draw_path(board_im, path)
 
                     # draw the expected hit
                     if ball_hit is not None:
@@ -326,3 +327,78 @@ def balls_update_process(stop_event, cap, crop_rect, lock, shared_balls_list, up
             shared_balls_list.extend(balls_list)
 
         time.sleep(1 / update_rate)
+
+
+def trapez(y,y0,w):
+    return np.clip(np.minimum(y+1+w/2-y0, -y+1+w/2+y0),0,1)
+
+def weighted_line(r0, c0, r1, c1, w, rmin=0, rmax=np.inf):
+    # The algorithm below works fine if c1 >= c0 and c1-c0 >= abs(r1-r0).
+    # If either of these cases are violated, do some switches.
+    if abs(c1-c0) < abs(r1-r0):
+        # Switch x and y, and switch again when returning.
+        xx, yy, val = weighted_line(c0, r0, c1, r1, w, rmin=rmin, rmax=rmax)
+        return (yy, xx, val)
+
+    # At this point we know that the distance in columns (x) is greater
+    # than that in rows (y). Possibly one more switch if c0 > c1.
+    if c0 > c1:
+        return weighted_line(r1, c1, r0, c0, w, rmin=rmin, rmax=rmax)
+
+    # The following is now always < 1 in abs
+    slope = (r1-r0) / (c1-c0)
+
+    # Adjust weight by the slope
+    w *= np.sqrt(1+np.abs(slope)) / 2
+
+    # We write y as a function of x, because the slope is always <= 1
+    # (in absolute value)
+    x = np.arange(c0, c1+1, dtype=float)
+    y = x * slope + (c1*r0-c0*r1) / (c1-c0)
+
+    # Now instead of 2 values for y, we have 2*np.ceil(w/2).
+    # All values are 1 except the upmost and bottommost.
+    thickness = np.ceil(w/2)
+    yy = (np.floor(y).reshape(-1,1) + np.arange(-thickness-1,thickness+2).reshape(1,-1))
+    xx = np.repeat(x, yy.shape[1])
+    vals = trapez(yy, y.reshape(-1,1), w).flatten()
+
+    yy = yy.flatten()
+
+    # Exclude useless parts and those outside of the interval
+    # to avoid parts outside of the picture
+    mask = np.logical_and.reduce((yy >= rmin, yy < rmax, vals > 0))
+
+    return (yy[mask].astype(int), xx[mask].astype(int), vals[mask])
+
+def \
+        draw_path(board_im, path):
+    # choose length of the path until it goes red
+    total_length = 1000
+    # Initialize cumulative length
+    cumulative_length = 0
+
+    for i in range(len(path) - 1):
+        # Calculate line coordinates and anti-aliasing weights
+        rr, cc, val = weighted_line(path[i][1], path[i][0], path[i + 1][1], path[i + 1][0], 5)
+
+        # Calculate length of the current segment
+        segment_length = np.linalg.norm(np.array(path[i + 1]) - np.array(path[i]))
+
+        # Calculate color gradient for each point on the line
+        color_gradient = np.linspace(cumulative_length / total_length,
+                                     (cumulative_length + segment_length) / total_length, len(rr))
+
+        # Update cumulative length
+        cumulative_length += segment_length
+        cumulative_length = 1000 if cumulative_length > 1000 else cumulative_length
+
+        for r, c, v, cg in zip(rr, cc, val, color_gradient):
+            if 0 <= r < board_im.shape[0] and 0 <= c < board_im.shape[1]:
+                if cg < 0.5:
+                    # Transition from green to yellow in the first half of the path
+                    color = (1 - 2 * cg) * np.array(Colors.GREEN) + 2 * cg * np.array(Colors.YELLOW)
+                else:
+                    # Transition from yellow to red in the second half of the path
+                    color = (2 - 2 * cg) * np.array(Colors.YELLOW) + (2 * cg - 1) * np.array(Colors.RED)
+                board_im[r, c] = (1 - v) * board_im[r, c] + v * color
