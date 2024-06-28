@@ -22,7 +22,7 @@ def get_target_ball(balls: np.ndarray, stickend: np.ndarray, back_center: np.nda
         # calculate the distance between the ball center and the line
         distance = abs(np.cross(direction, stickend - ball))
         # if the distance is less than the radius of the ball, the ball is intersected by the line
-        if distance <= REAL_BALL_RADIUS_PIXELS:
+        if distance <= REAL_BALL_RADIUS_PIXELS and np.inner(direction, ball - stickend) > 0:
             target_balls.append(ball)
 
     # find the closest ball to the stickend
