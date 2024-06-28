@@ -23,8 +23,10 @@ from perfectswish.utils.webcam import MultiprocessWebcamCapture
 from perfectswish.visualization.visualize import draw_board
 from perfectswish.simulation.simulate import REAL_BALL_RADIUS_PIXELS
 
+STICKEND_VALUE = 10
+AVERAGE = True
 FRONT_FIDUCIAL_ID = 4
-
+STICKEND_RADIUS = 10
 BACK_FIDUCIAL_ID = 3
 
 
@@ -138,10 +140,30 @@ class GamePhase(Phase):
         with self.__output_image_lock:
             self.__next_image = im
 
+    def __find_max(self, last_list):
+        # maximum
+        max_dict = {}
+        for i in range(len(last_list)):
+            mode = False
+            for key in max_dict.keys():
+                if np.linalg.norm(last_list[i] - key) < STICKEND_RADIUS:
+                    max_dict[tuple(key)] += 1
+                    mode = True
+            if not mode:
+                max_dict[tuple(last_list[i])] = 1
+        max_key = max(max_dict, key=max_dict.get)
+        # to ndarray
+        max_key = np.array(max_key)
+        return max_key
+
     def __generate_output_image(self, SHOW_HOLES = False) -> NoReturn:
         """
         This will continously generate the output image.
         """
+        last_stickend = []
+        last_back_fiducial_center = []
+        last_front_fiducial_center = []
+
         while not self.__stop_event.is_set():
             webcam_image = self.__cap.get_latest_image()
             if not self.__crop_rect:
@@ -154,6 +176,46 @@ class GamePhase(Phase):
                                                                                                  front_fiducial_center)
             # self.__cue_detector.back_fiducial_center_coords = back_fiducial_center
             # self.__cue_detector.front_fiducial_center_coords = front_fiducial_center
+
+            # average
+            if len(last_stickend) < STICKEND_VALUE:
+                last_stickend.append(stickend)
+                last_back_fiducial_center.append(back_fiducial_center)
+                last_front_fiducial_center.append(front_fiducial_center)
+            else:
+                last_stickend.pop(0)
+                last_stickend.append(stickend)
+                last_back_fiducial_center.pop(0)
+                last_back_fiducial_center.append(back_fiducial_center)
+                last_front_fiducial_center.pop(0)
+                last_front_fiducial_center.append(front_fiducial_center)
+
+            # average
+            stickend_ave = np.mean(last_stickend, axis=0)
+            back_fiducial_center_ave = np.mean(last_back_fiducial_center, axis=0)
+            front_fiducial_center_ave = np.mean(last_front_fiducial_center, axis=0)
+
+            stickend_max = self.__find_max(tuple(last_stickend))
+            back_fiducial_center_max = self.__find_max(tuple(last_back_fiducial_center))
+            front_fiducial_center_max = self.__find_max(tuple(last_front_fiducial_center))
+
+
+            if AVERAGE:
+                stickend = stickend_ave
+                back_fiducial_center = back_fiducial_center_ave
+                front_fiducial_center = front_fiducial_center_ave
+            else:
+                stickend = stickend_max
+                back_fiducial_center = back_fiducial_center_max
+                front_fiducial_center = front_fiducial_center_max
+
+
+
+
+
+
+
+
             cuestick_exist = all([stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
             balls = self.__read_balls()
             board_im = draw_board(
