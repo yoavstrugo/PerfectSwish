@@ -243,7 +243,7 @@ class BallDetector:
 
     def remove_fiducials(self, image):
         cuestick = self.fiducial_detector.detect_cuestick(image)
-        if cuestick is not None:
+        if cuestick[0] is not None:
             stickend, back_fiducial_center, front_fiducial_center = cuestick
             image_copy = image.copy()
             cv2.circle(image_copy, tuple(np.int32(back_fiducial_center)), 70, (150, 200, 100), -1)

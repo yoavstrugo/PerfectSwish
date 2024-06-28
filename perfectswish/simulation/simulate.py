@@ -114,8 +114,8 @@ def find_ball_hit(white_ball, balls, direction):
         hits_data.append(hit_data)
 
     closest_hit = None
+    minimum_dist = math.inf
     for hit in hits_data:
-        minimum_dist = math.inf
         if not hit:
             continue
 

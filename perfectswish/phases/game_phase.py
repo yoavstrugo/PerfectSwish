@@ -212,13 +212,6 @@ class GamePhase(Phase):
                 back_fiducial_center = back_fiducial_center_max
                 front_fiducial_center = front_fiducial_center_max
 
-
-
-
-
-
-
-
             cuestick_exist = all([stickend is not None, back_fiducial_center is not None, front_fiducial_center is not None])
             balls = self.__read_balls()
             board_im = draw_board(
@@ -251,12 +244,13 @@ class GamePhase(Phase):
                     # draw the expected hit
                     if ball_hit is not None:
                         hit_direction = normalize(ball_hit.hit_point - ball_hit.white_ball_pos)
-                        arrow_start = ball_hit.hit_point
-                        arrow_end = arrow_start + hit_direction * 70
+                        arrow_start = ball_hit.hit_point + hit_direction * 2 * REAL_BALL_RADIUS_PIXELS
+                        arrow_end = arrow_start + hit_direction * 250
                         cv2.arrowedLine(board_im, tuple(arrow_start.astype(int)),
                                         tuple(arrow_end.astype(int)), Colors.GREEN, 7)
+
             for ball in balls:
-                cv2.circle(board_im, tuple(ball.astype(int)), REAL_BALL_RADIUS_PIXELS, Colors.GREEN, 15)
+                cv2.circle(board_im, tuple(ball.astype(int)), REAL_BALL_RADIUS_PIXELS - 5, Colors.SOFT_GREEN, 10)
 
             if SHOW_HOLES:
                 holes = [(0, 0), (0, BOARD_BASE_HEIGHT * RESOLUTION_FACTOR), (BOARD_BASE_WIDTH * RESOLUTION_FACTOR, 0),
@@ -372,34 +366,13 @@ def weighted_line(r0, c0, r1, c1, w, rmin=0, rmax=np.inf):
     return (yy[mask].astype(int), xx[mask].astype(int), vals[mask])
 
 def draw_path(board_im, path):
-    # choose length of the path until it goes red
-    total_length = BOARD_BASE_HEIGHT * RESOLUTION_FACTOR * 3 # 3 is the number of wall bounces before the path goes red
-    # Initialize cumulative length
-    cumulative_length = 0
-
-    for i in range(len(path) - 1):
-        # Calculate line coordinates and anti-aliasing weights
-        rr, cc, val = weighted_line(path[i][1], path[i][0], path[i + 1][1], path[i + 1][0], 5)
-
-        # Calculate length of the current segment
-        segment_length = np.linalg.norm(np.array(path[i + 1]) - np.array(path[i]))
-
-        # Calculate color gradient for each point on the line
-        color_gradient = np.linspace(cumulative_length / total_length,
-                                     (cumulative_length + segment_length) / total_length, len(rr))
-
-        # Update cumulative length
-        cumulative_length += segment_length
-
-        if cumulative_length > total_length:
-            return
-
-        for r, c, v, cg in zip(rr, cc, val, color_gradient):
+    for i in range(len(path)-1):
+        rr, cc, val = weighted_line(path[i][1], path[i][0], path[i+1][1], path[i+1][0], 5)
+        for r, c, v in zip(rr, cc, val):
             if 0 <= r < board_im.shape[0] and 0 <= c < board_im.shape[1]:
-                if cg < 0.5:
-                    # Transition from green to yellow in the first half of the path
-                    color = (1 - 2 * cg) * np.array(Colors.GREEN) + 2 * cg * np.array(Colors.AQUA)
-                else:
-                    # Transition from yellow to red in the second half of the path
-                    color = (2 - 2 * cg) * np.array(Colors.AQUA) + (2 * cg - 1) * np.array(Colors.BLUE)
-                board_im[r, c] = (1 - v) * board_im[r, c] + v * color
+                board_im[r, c] = (1 - v) * board_im[r, c] + v * np.array(Colors.GREEN)
+        if np.linalg.norm(np.array(path[i+1]) - np.array(path[i])) > 3 * BOARD_BASE_HEIGHT * RESOLUTION_FACTOR:
+            break
+    return
+
+

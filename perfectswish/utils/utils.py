@@ -15,6 +15,7 @@ class Colors:
     BROWN: Color = (42, 42, 165)
     BLACK: Color = (0, 0, 0)
     AQUA: Color = (0, 255, 255)
+    SOFT_GREEN = (144, 238, 144)
 
 import cv2
 import matplotlib.pyplot as plt
